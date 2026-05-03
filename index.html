@@ -35,18 +35,17 @@
     #weather-badge .wtemp { font-size: 18px; font-weight: 500; }
     #weather-badge .wcond { font-size: 11px; color: rgba(255,255,255,0.5); }
     #weather-badge .wextra { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 1px; }
-    #event-banner { position: absolute; bottom: 52px; left: 12px; right: 12px; border-radius: var(--radius-md); padding: 7px 12px; color: #fff; font-size: 11px; display: none; justify-content: space-between; align-items: center; }
+    #event-banner { position: absolute; bottom: 12px; left: 12px; right: 12px; border-radius: var(--radius-md); padding: 7px 12px; color: #fff; font-size: 11px; display: none; justify-content: space-between; align-items: center; }
     #event-banner .etitle { font-weight: 500; font-size: 12px; }
     #event-banner .emeta { color: rgba(255,255,255,0.55); font-size: 10px; margin-top: 2px; }
     #event-banner .ebadge { border-radius: 99px; padding: 3px 9px; font-size: 10px; white-space: nowrap; margin-left: 10px; flex-shrink: 0; }
-    #legend { position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.6); border-radius: var(--radius-md); padding: 7px 11px; color: #fff; font-size: 10px; }
-    #legend .grad { height: 5px; width: 100px; border-radius: 3px; background: linear-gradient(to right,#2563eb,#22c55e,#facc15,#f97316,#ef4444); margin: 3px 0; }
-    #legend .lrow { display: flex; justify-content: space-between; width: 100px; color: rgba(255,255,255,0.45); }
-    #legend .licons { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
-    #legend .li { display: flex; align-items: center; gap: 5px; color: rgba(255,255,255,0.55); font-size: 10px; }
-    #api-status-bar { position: absolute; bottom: 12px; right: 12px; display: flex; gap: 5px; }
-    .api-dot-wrap { display: flex; align-items: center; gap: 3px; font-size: 9px; color: rgba(255,255,255,0.4); background: rgba(0,0,0,0.5); padding: 3px 6px; border-radius: 99px; }
-    .api-dot { width: 6px; height: 6px; border-radius: 50%; }
+    #legend { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); border-radius: var(--radius-md); padding: 6px 12px; color: #fff; font-size: 10px; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+    #legend .grad { height: 5px; width: 90px; border-radius: 3px; background: linear-gradient(to right,#2563eb,#22c55e,#facc15,#f97316,#ef4444); }
+    #legend .lrow { display: flex; justify-content: space-between; width: 90px; color: rgba(255,255,255,0.45); font-size: 9px; margin-top: 2px; }
+    #legend .lgrad-wrap { display: flex; flex-direction: column; }
+    #legend .lsep { width: 0.5px; height: 24px; background: rgba(255,255,255,0.2); }
+    #legend .licons { display: flex; gap: 10px; }
+    #legend .li { display: flex; align-items: center; gap: 4px; color: rgba(255,255,255,0.55); font-size: 10px; }
     #tooltip { position: absolute; background: rgba(0,0,0,0.85); border-radius: var(--radius-md); padding: 8px 12px; color: #fff; font-size: 12px; pointer-events: none; display: none; white-space: nowrap; line-height: 1.6; z-index: 10; }
 
     /* CONTROLS */
@@ -64,12 +63,26 @@
     #play-btn:hover { background: var(--color-surface2); }
     .hour-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text3); padding: 0 2px; }
     .mod-row { display: flex; gap: 6px; flex-wrap: wrap; }
-    .mod-chip { padding: 4px 10px; border-radius: 99px; font-size: 11px; border: 0.5px solid var(--color-border); color: var(--color-text2); display: flex; align-items: center; gap: 5px; }
-    .mod-chip .ind { width: 6px; height: 6px; border-radius: 50%; background: #475569; }
-    .mod-chip.on .ind { background: #f97316; }
-    .mod-chip.on { color: var(--color-text); border-color: var(--color-border2); }
-    .mod-chip.live .ind { background: #22c55e; }
-    .mod-chip.live { color: var(--color-text); border-color: var(--color-border2); }
+    .mod-toggle { padding: 5px 11px; border-radius: 99px; font-size: 11px; border: 0.5px solid var(--color-border2); background: var(--color-surface); color: var(--color-text2); display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; transition: background 0.15s, border-color 0.15s; }
+    .mod-toggle:hover { background: var(--color-surface2); }
+    .mod-toggle .t-dot { width: 6px; height: 6px; border-radius: 50%; background: #475569; flex-shrink: 0; transition: background 0.2s; }
+    .mod-toggle .t-src { font-size: 9px; padding: 1px 5px; border-radius: 99px; margin-left: 2px; font-weight: 500; }
+    .mod-toggle.enabled { color: var(--color-text); border-color: rgba(255,255,255,0.25); background: var(--color-surface2); }
+    .mod-toggle.enabled .t-dot { background: #22c55e; }
+    .mod-toggle.disabled { opacity: 0.45; }
+    .mod-toggle.disabled .t-dot { background: #475569; }
+    /* API legend table */
+    .api-legend { background: var(--color-surface); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 12px 14px; }
+    .api-legend-title { font-size: 11px; color: var(--color-text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+    .api-legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+    .api-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .api-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .api-legend-name { color: var(--color-text); font-weight: 500; min-width: 90px; }
+    .api-legend-desc { color: var(--color-text2); font-size: 11px; }
+    .api-legend-badge { font-size: 10px; padding: 1px 7px; border-radius: 99px; margin-left: auto; font-weight: 500; }
+    .badge-live { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .badge-mock { background: rgba(249,115,22,0.15); color: #f97316; }
+    .badge-pending { background: rgba(71,85,105,0.3); color: #94a3b8; }
 
     /* VENUE PANEL */
     .venue-panel { background: var(--color-surface); border: 0.5px solid var(--color-border2); border-radius: var(--radius-lg); padding: 14px 16px; }
@@ -107,7 +120,7 @@
   </div>
 
   <div id="canvas-wrap">
-    <canvas id="map" height="400"></canvas>
+    <canvas id="map" height="460"></canvas>
     <div id="overlay-info">
       <div class="time-big" id="time-display">--</div>
       <div class="time-sub" id="date-display">San Francisco</div>
@@ -125,16 +138,17 @@
       <div class="ebadge" id="ev-badge"></div>
     </div>
     <div id="legend">
-      <div style="color:rgba(255,255,255,0.55);margin-bottom:2px;">Crowd density</div>
-      <div class="grad"></div>
-      <div class="lrow"><span>Quiet</span><span>Packed</span></div>
+      <div class="lgrad-wrap">
+        <div class="grad"></div>
+        <div class="lrow"><span>Quiet</span><span>Packed</span></div>
+      </div>
+      <div class="lsep"></div>
       <div class="licons">
-        <div class="li"><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#f97316"/></svg>Muni stop (active)</div>
-        <div class="li"><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#3a2a1a"/></svg>Muni stop (closed)</div>
-        <div class="li"><span style="font-size:11px;color:#facc15;font-weight:700">$</span><span style="margin-left:3px">Happy hour active</span></div>
+        <div class="li"><svg width="9" height="9"><circle cx="4.5" cy="4.5" r="3.5" fill="#f97316"/></svg>Muni active</div>
+        <div class="li"><svg width="9" height="9"><circle cx="4.5" cy="4.5" r="3.5" fill="#3a2a1a" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/></svg>Muni closed</div>
+        <div class="li"><span style="font-size:10px;color:#facc15;font-weight:700;line-height:1">$</span> Happy hour</div>
       </div>
     </div>
-    <div id="api-status-bar"></div>
     <div id="tooltip"></div>
   </div>
 
@@ -145,9 +159,9 @@
     </div>
 
     <div>
-      <div class="section-label">Active modifiers</div>
+      <div class="section-label">Modifiers <span style="color:var(--color-text3);font-weight:400;text-transform:none;letter-spacing:0">— click to toggle on/off</span></div>
       <div class="mod-row" id="mod-row">
-        <div class="mod-chip"><span class="ind"></span>Loading live data...</div>
+        <div class="mod-toggle disabled"><span class="t-dot"></span>Loading...</div>
       </div>
     </div>
 
@@ -155,11 +169,11 @@
       <div class="section-label">Time of day</div>
       <div class="time-track">
         <button id="play-btn">&#9654;</button>
-        <input type="range" id="time-range" min="0" max="23" value="22" step="1">
+        <input type="range" id="time-range" min="0" max="23" value="0" step="1">
       </div>
       <div class="hour-labels">
-        <span>12a</span><span>3a</span><span>6a</span><span>9a</span>
-        <span>12p</span><span>3p</span><span>6p</span><span>9p</span><span>11p</span>
+        <span>4a</span><span>7a</span><span>10a</span><span>1p</span>
+        <span>4p</span><span>7p</span><span>10p</span><span>1a</span><span>3a</span>
       </div>
     </div>
 
@@ -189,6 +203,13 @@
         <li><strong>511.org Muni</strong> — <a href="https://511.org/open-data/token" style="color:#93c5fd">511.org/open-data/token</a> → instant free key → set <code>MUNI_511_KEY</code> — enables real-time arrivals &amp; alerts</li>
       </ul>
     </div>
+
+    <div class="api-legend">
+      <div class="api-legend-title">Data sources</div>
+      <div class="api-legend-grid" id="api-legend-grid">
+        <div class="api-legend-row"><div class="api-status-dot" style="background:#475569"></div><span class="api-legend-name">Loading...</span></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -204,9 +225,13 @@ const CONFIG = {
   SF_LNG: -122.4194,
 };
 
-const W=680, H=400;
+const W=680, H=460;
 const now=new Date();
 const currentHour=now.getHours();
+// Slider goes 0-23 where position 0 = 4am, position 23 = 3am next day
+const START_HOUR=4;
+const hourToSlider=h=>((h-START_HOUR+24)%24);
+const sliderToHour=s=>((s+START_HOUR)%24);
 
 const CATEGORIES=[
   {id:'all',   label:'All venues',         color:'#94a3b8',dot:'#94a3b8'},
@@ -229,22 +254,59 @@ const NEIGHBORHOODS=[
   {id:'nob',    name:'Nob Hill',   cx:0.49,cy:0.38,curve:[4,3,3,3,3,4,5,8,14,20,26,32,36,40,42,44,42,40,44,46,42,35,22,12]},
   {id:'china',  name:'Chinatown',  cx:0.53,cy:0.37,curve:[3,2,2,2,2,3,5,8,18,30,40,45,48,50,48,44,38,30,20,15,10,7,5,3]},
   {id:'dog',    name:'Dogpatch',   cx:0.60,cy:0.65,curve:[3,2,2,2,2,3,5,12,30,42,45,40,35,30,28,32,35,42,50,52,45,35,20,8]},
+  // Ocean Beach — peaks hard at sunset, dead otherwise
+  {id:'oceanbeach',name:'Ocean Beach',cx:0.115,cy:0.55,curve:[2,1,1,1,1,2,3,4,5,8,12,18,22,26,28,30,35,42,55,75,90,70,30,10]},
+  // Lands End / Sutro Baths — sunset destination
+  {id:'landsend', name:'Lands End',  cx:0.115,cy:0.38,curve:[1,1,1,1,1,2,4,6,10,14,18,22,26,28,30,32,36,44,62,82,75,40,15,5]},
+  // Baker Beach
+  {id:'bakerbeach',name:'Baker Beach',cx:0.175,cy:0.25,curve:[1,1,1,1,1,2,4,8,14,18,22,24,22,20,22,26,32,42,58,78,65,30,10,3]},
+  // Marina / Crissy Field — also a sunset spot
+  {id:'marina',   name:'Marina',     cx:0.38,cy:0.19,curve:[3,2,2,2,2,3,5,8,14,18,22,26,28,30,32,36,40,50,65,72,60,42,22,8]},
 ];
 
 const MUNI_STOPS=[
-  {name:'Embarcadero',     line:'F/J/K/L/M/N',cx:0.625,cy:0.42, runStart:5,runEnd:1},
-  {name:'Montgomery St',   line:'J/K/L/M/N',  cx:0.575,cy:0.43, runStart:5,runEnd:1},
-  {name:'Powell St',       line:'J/K/L/M/N',  cx:0.545,cy:0.44, runStart:5,runEnd:1},
-  {name:'Civic Center',    line:'J/K/L/M/N',  cx:0.515,cy:0.45, runStart:5,runEnd:1},
-  {name:'16th St Mission', line:'BART+Muni',  cx:0.435,cy:0.595,runStart:5,runEnd:1},
-  {name:'24th St Mission', line:'BART+Muni',  cx:0.435,cy:0.645,runStart:5,runEnd:1},
-  {name:'Castro Station',  line:'K/L/M',      cx:0.355,cy:0.555,runStart:5,runEnd:1},
-  {name:'Church St',       line:'J',          cx:0.375,cy:0.545,runStart:5,runEnd:1},
-  {name:'Van Ness',        line:'J/K/L/M',    cx:0.465,cy:0.465,runStart:5,runEnd:1},
-  {name:'Forest Hill',     line:'K/L/M',      cx:0.285,cy:0.585,runStart:5,runEnd:1},
-  {name:'West Portal',     line:'K/L/M',      cx:0.27, cy:0.60, runStart:5,runEnd:1},
-  {name:'Caltrain Station',line:'N/T',        cx:0.565,cy:0.58, runStart:5,runEnd:1},
-  {name:'4th & King',      line:'N',          cx:0.565,cy:0.565,runStart:5,runEnd:1},
+  // Shared underground trunk (all lines)
+  {name:'Embarcadero',       line:'J/K/L/M/N/T',cx:0.720,cy:0.418,runStart:5,runEnd:1},
+  {name:'Montgomery St',     line:'J/K/L/M/N/T',cx:0.692,cy:0.428,runStart:5,runEnd:1},
+  {name:'Powell St',         line:'J/K/L/M/N/T',cx:0.666,cy:0.438,runStart:5,runEnd:1},
+  {name:'Civic Center',      line:'J/K/L/M/N/T',cx:0.638,cy:0.448,runStart:5,runEnd:1},
+  {name:'Van Ness',          line:'J/K/L/M/N/T',cx:0.606,cy:0.460,runStart:5,runEnd:1},
+  {name:'Church St',         line:'J/K/L/M/N/T',cx:0.572,cy:0.472,runStart:5,runEnd:1},
+  {name:'Castro',            line:'K/L/M/N',    cx:0.536,cy:0.488,runStart:5,runEnd:1},
+  {name:'Forest Hill',       line:'K/L/M',      cx:0.490,cy:0.522,runStart:5,runEnd:1},
+  {name:'West Portal',       line:'K/L/M',      cx:0.458,cy:0.542,runStart:5,runEnd:1},
+  // J Church surface
+  {name:'Church & 18th',     line:'J',          cx:0.554,cy:0.512,runStart:5,runEnd:1},
+  {name:'Church & 24th',     line:'J',          cx:0.542,cy:0.558,runStart:5,runEnd:1},
+  {name:'Church & 30th',     line:'J',          cx:0.530,cy:0.600,runStart:5,runEnd:1},
+  {name:'Balboa Park',       line:'J/K',        cx:0.434,cy:0.822,runStart:5,runEnd:1},
+  // K Ingleside south
+  {name:'City College',      line:'K',          cx:0.440,cy:0.770,runStart:5,runEnd:1},
+  {name:'Ocean & Lee',       line:'K',          cx:0.432,cy:0.732,runStart:5,runEnd:1},
+  // L Taraval west
+  {name:'Taraval & 19th',    line:'L',          cx:0.318,cy:0.592,runStart:5,runEnd:1},
+  {name:'Taraval & 30th',    line:'L',          cx:0.248,cy:0.598,runStart:5,runEnd:1},
+  {name:'SF Zoo',            line:'L',          cx:0.162,cy:0.612,runStart:5,runEnd:1},
+  // M Ocean View south
+  {name:'Sloat & St Francis',line:'M',          cx:0.418,cy:0.600,runStart:5,runEnd:1},
+  {name:'SF State',          line:'M',          cx:0.370,cy:0.668,runStart:5,runEnd:1},
+  {name:'Randolph & Arch',   line:'M',          cx:0.316,cy:0.732,runStart:5,runEnd:1},
+  // N Judah west
+  {name:'Duboce & Church',   line:'N',          cx:0.572,cy:0.464,runStart:5,runEnd:1},
+  {name:'Judah & 9th',       line:'N',          cx:0.412,cy:0.490,runStart:5,runEnd:1},
+  {name:'Judah & 19th',      line:'N',          cx:0.312,cy:0.490,runStart:5,runEnd:1},
+  {name:'Judah & Sunset',    line:'N',          cx:0.198,cy:0.490,runStart:5,runEnd:1},
+  {name:'Ocean Beach (N)',   line:'N',          cx:0.148,cy:0.490,runStart:5,runEnd:1},
+  // T Third St south
+  {name:'4th & King',        line:'N/T',        cx:0.662,cy:0.532,runStart:5,runEnd:1},
+  {name:'Mission Rock',      line:'T',          cx:0.690,cy:0.562,runStart:5,runEnd:1},
+  {name:'20th St (T)',       line:'T',          cx:0.700,cy:0.602,runStart:5,runEnd:1},
+  {name:'23rd St (T)',       line:'T',          cx:0.706,cy:0.640,runStart:5,runEnd:1},
+  {name:'Marin St',          line:'T',          cx:0.712,cy:0.674,runStart:5,runEnd:1},
+  {name:'Sunnydale',         line:'T',          cx:0.720,cy:0.822,runStart:5,runEnd:1},
+  // T north surface to Chinatown
+  {name:'Chinatown-Rose Pak',line:'T',          cx:0.622,cy:0.346,runStart:5,runEnd:1},
+  {name:'Union Sq/Market',   line:'T',          cx:0.648,cy:0.388,runStart:5,runEnd:1},
 ];
 
 const VENUES=[
@@ -287,11 +349,21 @@ const HOLIDAY_PROFILES={
   "Memorial Day":      {color:'#1d4ed8',bg:'rgba(29,78,216,0.85)',  boosts:{dive:0.3,happy:0.25},            label:"Long weekend · bars busy all day"},
 };
 
-const landPts=[[0.28,0.25],[0.40,0.20],[0.54,0.17],[0.67,0.22],[0.74,0.32],[0.76,0.46],[0.73,0.62],[0.72,0.80],[0.28,0.80]];
+
+
 let hour=currentHour,activeCat='all',selectedVenue=null,hoverVenue=null,playing=false,playInt=null;
 let weather={temp:62,condition:'Partly cloudy',isRaining:false,rainIntensity:0,source:'mock'};
 let games=[],holidays=[],sunsetHour=20,sunriseHour=6;
 let apiStatus={weather:'mock',sports:'loading',holidays:'loading',sunrise:'loading',muni:'mock'};
+
+// Modifier toggles — each can be turned on/off by the user
+const modToggles={
+  weather: true,
+  sports:  true,
+  holidays:true,
+  sunset:  true,
+  rain:    true,
+};
 
 const canvas=document.getElementById('map');
 const ctx=canvas.getContext('2d');
@@ -306,17 +378,24 @@ const getDateStr=()=>now.toLocaleDateString('en-US',{weekday:'long',month:'long'
 const muniRunning=(h,s)=>s.runEnd<s.runStart?h>=s.runStart||h<=s.runEnd:h>=s.runStart&&h<=s.runEnd;
 const happyState=(h,v)=>h<v.happyStart||h>=v.happyEnd?'off':h===v.happyEnd-1?'ending':'on';
 const happyBr=(h,v)=>{const s=happyState(h,v);return s==='off'?0:s==='ending'?0.45:1-(h-v.happyStart)/(v.happyEnd-v.happyStart)*0.3;};
-const sunsetMult=h=>{const d=h-sunsetHour;return(d<-1||d>3)?1:1+0.18*Math.exp(-0.5*Math.pow(d-0.5,2));};
+const sunsetMult=(h,nid)=>{
+  const d=h-sunsetHour;
+  const isBeach=['oceanbeach','landsend','bakerbeach','marina'].includes(nid);
+  const peak=isBeach?0.65:0.18;
+  return(d<-2||d>3)?1:1+peak*Math.exp(-0.5*Math.pow(d-0.5,2));
+};
 const holBoostForCat=cat=>{let b=0;holidays.forEach(hol=>{const p=HOLIDAY_PROFILES[hol];if(p&&p.boosts[cat])b=Math.max(b,p.boosts[cat]);});return b;};
 
 function applyModifiers(venue,baseCurve){
-  const hb=holBoostForCat(venue.cat);
+  const hb=modToggles.holidays?holBoostForCat(venue.cat):0;
   return baseCurve.map((val,h)=>{
     let v=val;
-    games.forEach(g=>{if(venue.gameboost&&venue.gameboost.includes(g.league)){const dist=Math.abs(h-g.gameHour);if(dist<=3){const b=g.boostMagnitude*(1-dist/4);v=Math.min(99,Math.round(v+(100-v)*b));}}});
+    if(modToggles.sports){
+      games.forEach(g=>{if(venue.gameboost&&venue.gameboost.includes(g.league)){const dist=Math.abs(h-g.gameHour);if(dist<=3){const b=g.boostMagnitude*(1-dist/4);v=Math.min(99,Math.round(v+(100-v)*b));}}});
+    }
     if(hb>0)v=Math.min(99,Math.round(v+(100-v)*hb));
-    v=Math.min(99,Math.round(v*sunsetMult(h)));
-    if(weather.isRaining&&venue.rainpenalty>0)v=Math.max(0,Math.round(v-venue.rainpenalty*weather.rainIntensity));
+    if(modToggles.sunset)v=Math.min(99,Math.round(v*sunsetMult(h,venue.nid)));
+    if(modToggles.rain&&modToggles.weather&&weather.isRaining&&venue.rainpenalty>0)v=Math.max(0,Math.round(v-venue.rainpenalty*weather.rainIntensity));
     return v;
   });
 }
@@ -393,39 +472,84 @@ function updateWeatherBadge(){
   document.getElementById('w-sunset').textContent=`Sunset ${fmt(sunsetHour)} · Sunrise ${fmt(sunriseHour)}`;
 }
 
-function updateApiStatusBar(){
-  const bar=document.getElementById('api-status-bar');bar.innerHTML='';
-  [{label:'Weather',key:'weather'},{label:'Sports',key:'sports'},{label:'Holidays',key:'holidays'},{label:'Sunrise',key:'sunrise'},{label:'Muni',key:'muni'}].forEach(a=>{
-    const s=apiStatus[a.key];
+function updateApiLegend(){
+  const grid=document.getElementById('api-legend-grid');
+  if(!grid)return;
+  const rows=[
+    {key:'weather',  name:'OpenWeatherMap', desc:'Real-time SF weather & rain', url:'https://openweathermap.org'},
+    {key:'sports',   name:'TheSportsDB',    desc:'SF team game schedules',       url:'https://thesportsdb.com'},
+    {key:'holidays', name:'Calendarific',   desc:'US national holidays',         url:'https://calendarific.com'},
+    {key:'sunrise',  name:'Sunrise-Sunset', desc:'Daily SF sunrise & sunset',    url:'https://sunrise-sunset.org'},
+    {key:'muni',     name:'511.org Muni',   desc:'Real-time train arrivals',     url:'https://511.org'},
+  ];
+  grid.innerHTML='';
+  rows.forEach(r=>{
+    const s=apiStatus[r.key];
     const color=s==='live'?'#22c55e':s==='mock'?'#f97316':'#475569';
-    const wrap=document.createElement('div');wrap.className='api-dot-wrap';
-    wrap.innerHTML=`<div class="api-dot" style="background:${color}"></div>${a.label}`;
-    wrap.title=`${a.label}: ${s}`;
-    bar.appendChild(wrap);
+    const badgeClass=s==='live'?'badge-live':s==='mock'?'badge-mock':'badge-pending';
+    const badgeText=s==='live'?'Live':s==='mock'?'Mock':'Pending';
+    const row=document.createElement('div');row.className='api-legend-row';
+    row.innerHTML=`<div class="api-status-dot" style="background:${color}"></div><span class="api-legend-name">${r.name}</span><span class="api-legend-desc">${r.desc}</span><span class="api-legend-badge ${badgeClass}">${badgeText}</span>`;
+    grid.appendChild(row);
   });
 }
 
 function updateModifiers(){
-  updateApiStatusBar();
+  updateApiLegend();
   const row=document.getElementById('mod-row');row.innerHTML='';
-  const chips=[];
-  chips.push({label:`${weather.temp}°F · ${weather.condition}`,active:weather.isRaining,live:apiStatus.weather==='live'});
-  chips.push({label:`Sunset ${fmt(sunsetHour)}`,active:true,live:apiStatus.sunrise==='live'});
-  games.forEach(g=>chips.push({label:`${g.league.toUpperCase()}: ${g.teams}`,active:true,live:apiStatus.sports==='live'}));
-  holidays.forEach(h=>chips.push({label:`Holiday: ${h}`,active:true,live:true}));
-  chips.forEach(m=>{
-    const chip=document.createElement('div');
-    chip.className='mod-chip'+(m.live?' live':m.active?' on':'');
-    chip.innerHTML=`<span class="ind"></span>${m.label}`;
-    row.appendChild(chip);
+
+  const defs=[
+    {
+      key:'weather', label:'Weather',
+      detail:()=>weather.isRaining?`${weather.temp}°F · Rain`:`${weather.temp}°F · ${weather.condition.split(' ').slice(-1)[0]}`,
+      src:'weather', hasData:true,
+    },
+    {
+      key:'rain', label:'Rain penalty',
+      detail:()=>'Outdoor venue crowd reduction',
+      src:'weather', hasData:weather.isRaining,
+    },
+    {
+      key:'sunset', label:'Sunset boost',
+      detail:()=>`Peaks ~${fmt(sunsetHour)} · beaches +65%`,
+      src:'sunrise', hasData:true,
+    },
+    {
+      key:'sports', label:'Game day',
+      detail:()=>games.length?games.map(g=>g.league.toUpperCase()+' '+g.teams.split(' vs ')[0]).join(', '):'No SF games today',
+      src:'sports', hasData:games.length>0,
+    },
+    {
+      key:'holidays', label:'Holidays',
+      detail:()=>holidays.length?holidays.join(', '):'No holidays today',
+      src:'holidays', hasData:holidays.length>0,
+    },
+  ];
+
+  defs.forEach(def=>{
+    const isOn=modToggles[def.key];
+    const srcLive=apiStatus[def.src]==='live';
+    const btn=document.createElement('div');
+    btn.className='mod-toggle'+(isOn?' enabled':' disabled');
+    const srcBadge=`<span class="t-src" style="background:${srcLive?'rgba(34,197,94,0.15)':'rgba(249,115,22,0.12)'};color:${srcLive?'#22c55e':'#f97316'}">${srcLive?'live':'mock'}</span>`;
+    btn.innerHTML=`<span class="t-dot"></span><span>${def.label}</span>${srcBadge}`;
+    btn.title=def.detail();
+    btn.addEventListener('click',()=>{
+      modToggles[def.key]=!modToggles[def.key];
+      updateModifiers();
+      updateBanner();
+      updateVenuePanel();
+      draw();
+    });
+    row.appendChild(btn);
   });
 }
 
 function updateBanner(){
   const banner=document.getElementById('event-banner');
   const events=[];
-  holidays.forEach(h=>{const p=HOLIDAY_PROFILES[h];if(p)events.push({title:h,meta:p.label,color:p.color,bg:p.bg,badge:'Holiday'});});
-  games.forEach(g=>events.push({title:`${g.league.toUpperCase()}: ${g.teams}`,meta:`${g.time} · nearby bars boosted`,color:'#93c5fd',bg:'rgba(15,30,60,0.88)',badge:'Game day'}));
+  if(modToggles.holidays) holidays.forEach(h=>{const p=HOLIDAY_PROFILES[h];if(p)events.push({title:h,meta:p.label,color:p.color,bg:p.bg,badge:'Holiday'});});
+  if(modToggles.sports)   games.forEach(g=>events.push({title:`${g.league.toUpperCase()}: ${g.teams}`,meta:`${g.time} · nearby bars boosted`,color:'#93c5fd',bg:'rgba(15,30,60,0.88)',badge:'Game day'}));
   if(events.length){
     const ev=events[0];
     banner.style.display='flex';banner.style.background=ev.bg;banner.style.borderColor=ev.color+'55';
@@ -442,21 +566,77 @@ function getVisibleVenues(){
   return VENUES.filter(v=>v.cat===activeCat);
 }
 
+// Muni line colors — official SFMTA palette
+const MUNI_LINES={J:{color:'#f4831f',name:'J Church'},K:{color:'#8dc63f',name:'K Ingleside'},L:{color:'#8b5ca8',name:'L Taraval'},M:{color:'#007a53',name:'M Ocean View'},N:{color:'#006cb7',name:'N Judah'},T:{color:'#d6001c',name:'T Third St'}};
+const MUNI_ROUTES=[
+  {color:'#2a3a5a',width:8,pts:[[0.720,0.418],[0.692,0.428],[0.666,0.438],[0.638,0.448],[0.606,0.460],[0.572,0.472]]},
+  {color:'#2a3a5a',width:6,pts:[[0.572,0.472],[0.536,0.488],[0.490,0.522],[0.458,0.542]]},
+  {color:'#f4831f',width:2.8,pts:[[0.572,0.472],[0.554,0.512],[0.542,0.558],[0.530,0.600],[0.510,0.650],[0.490,0.710],[0.468,0.775],[0.434,0.822]]},
+  {color:'#8dc63f',width:2.8,pts:[[0.458,0.542],[0.442,0.582],[0.434,0.628],[0.438,0.682],[0.440,0.732],[0.440,0.770],[0.434,0.822]]},
+  {color:'#8b5ca8',width:2.8,pts:[[0.458,0.542],[0.418,0.562],[0.380,0.578],[0.318,0.592],[0.248,0.598],[0.162,0.612]]},
+  {color:'#007a53',width:2.8,pts:[[0.458,0.542],[0.438,0.568],[0.418,0.600],[0.388,0.636],[0.370,0.668],[0.340,0.702],[0.316,0.732],[0.290,0.770],[0.275,0.800],[0.434,0.822]]},
+  {color:'#006cb7',width:2.8,pts:[[0.572,0.472],[0.572,0.462],[0.540,0.474],[0.510,0.484],[0.412,0.490],[0.312,0.490],[0.198,0.490],[0.148,0.490]]},
+  {color:'#d6001c',width:2.8,pts:[[0.622,0.346],[0.638,0.365],[0.648,0.388],[0.666,0.438],[0.662,0.532],[0.690,0.562],[0.700,0.602],[0.706,0.640],[0.712,0.674],[0.714,0.710],[0.716,0.750],[0.720,0.822]]},
+];
+function drawPoly(pts,color,width){ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';pts.forEach(([rx,ry],i)=>{const[x,y]=px(rx,ry);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}
+function fillPoly2(pts,fill,stroke,sw){ctx.beginPath();pts.forEach(([rx,ry],i)=>{const[x,y]=px(rx,ry);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=sw||0.7;ctx.stroke();}}
+function drawMapBase(){
+  ctx.fillStyle='#0d1520';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(18,45,80,0.20)';ctx.lineWidth=0.35;
+  for(let y=0.025;y<1;y+=0.028){const[,py0]=px(0,y);ctx.beginPath();ctx.moveTo(0,py0);ctx.lineTo(W,py0);ctx.stroke();}
+  fillPoly2([[0.100,1.0],[0.100,0.780],[0.128,0.700],[0.150,0.625],[0.175,0.580],[0.192,0.548],[0.180,0.490],[0.170,0.415],[0.188,0.328],[0.238,0.232],[0.298,0.170],[0.378,0.130],[0.460,0.120],[0.542,0.130],[0.618,0.158],[0.678,0.198],[0.738,0.268],[0.778,0.348],[0.800,0.432],[0.800,0.530],[0.778,0.628],[0.748,0.728],[0.722,0.832],[0.682,0.932],[0.600,1.0]],'#161d2e');
+  fillPoly2([[0.148,0.458],[0.305,0.458],[0.305,0.538],[0.148,0.538]],'#182a18','#1e3a1e');
+  fillPoly2([[0.218,0.158],[0.342,0.158],[0.378,0.208],[0.358,0.268],[0.302,0.278],[0.238,0.252],[0.218,0.205]],'#172217','#1c301c');
+  fillPoly2([[0.366,0.566],[0.396,0.566],[0.396,0.606],[0.366,0.606]],'#182a18','#1e3a1e');
+  fillPoly2([[0.440,0.742],[0.510,0.742],[0.510,0.800],[0.440,0.800]],'#182a18');
+  fillPoly2([[0.350,0.490],[0.372,0.490],[0.372,0.515],[0.350,0.515]],'#182a18');
+  fillPoly2([[0.488,0.668],[0.524,0.668],[0.524,0.700],[0.488,0.700]],'#182a18');
+  fillPoly2([[0.645,0.500],[0.672,0.500],[0.672,0.522],[0.645,0.522]],'#182a18');
+  fillPoly2([[0.320,0.158],[0.490,0.150],[0.500,0.194],[0.320,0.200]],'#182a18');
+  fillPoly2([[0.100,0.412],[0.150,0.412],[0.150,0.828],[0.100,0.828]],'#1e1c12');
+  fillPoly2([[0.100,0.278],[0.192,0.278],[0.192,0.415],[0.150,0.415],[0.150,0.380],[0.100,0.380]],'#141c14');
+  fillPoly2([[0.608,0.620],[0.742,0.620],[0.742,0.656],[0.608,0.656]],'#0d1a2a');
+  fillPoly2([[0.610,0.732],[0.730,0.732],[0.730,0.752],[0.610,0.752]],'#0d1a2a');
+  const sg=(list,col,w)=>{ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='square';list.forEach(pts=>{ctx.beginPath();pts.forEach(([rx,ry],i)=>{const[x,y]=px(rx,ry);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();});};
+  sg([[[0.180,0.270],[0.620,0.270]],[[0.180,0.295],[0.638,0.295]],[[0.180,0.320],[0.650,0.320]],[[0.180,0.345],[0.658,0.345]],[[0.180,0.370],[0.664,0.370]],[[0.180,0.395],[0.668,0.395]],[[0.180,0.420],[0.670,0.420]],[[0.180,0.445],[0.670,0.445]],[[0.180,0.470],[0.668,0.470]],[[0.180,0.496],[0.665,0.496]],[[0.180,0.522],[0.658,0.522]],[[0.180,0.548],[0.648,0.548]],[[0.180,0.574],[0.636,0.574]],[[0.180,0.600],[0.622,0.600]],[[0.180,0.626],[0.608,0.626]],[[0.180,0.652],[0.592,0.652]],[[0.180,0.678],[0.578,0.678]],[[0.180,0.704],[0.562,0.704]],[[0.180,0.730],[0.548,0.730]],[[0.180,0.756],[0.532,0.756]],[[0.220,0.175],[0.220,0.955]],[[0.245,0.175],[0.245,0.955]],[[0.270,0.175],[0.270,0.955]],[[0.295,0.175],[0.295,0.955]],[[0.320,0.175],[0.320,0.955]],[[0.345,0.175],[0.345,0.955]],[[0.370,0.175],[0.370,0.955]],[[0.395,0.175],[0.395,0.955]],[[0.420,0.175],[0.420,0.955]],[[0.445,0.175],[0.445,0.955]],[[0.470,0.175],[0.470,0.955]],[[0.495,0.175],[0.495,0.955]],[[0.520,0.175],[0.520,0.955]],[[0.545,0.175],[0.545,0.900]],[[0.570,0.175],[0.570,0.848]],[[0.595,0.175],[0.595,0.808]],[[0.620,0.175],[0.620,0.768]],[[0.645,0.175],[0.645,0.730]],[[0.670,0.180],[0.670,0.692]],[[0.695,0.185],[0.695,0.660]],[[0.720,0.200],[0.720,0.628]]],'#18243a',0.38);
+  sg([[[0.180,0.258],[0.605,0.258]],[[0.180,0.335],[0.658,0.335]],[[0.180,0.488],[0.665,0.488]],[[0.180,0.542],[0.650,0.542]],[[0.180,0.658],[0.612,0.658]],[[0.372,0.175],[0.372,0.840]],[[0.422,0.175],[0.422,0.840]],[[0.472,0.175],[0.472,0.840]],[[0.522,0.175],[0.522,0.840]],[[0.572,0.175],[0.572,0.825]],[[0.622,0.175],[0.622,0.748]],[[0.672,0.198],[0.672,0.678]],[[0.600,0.470],[0.648,0.388],[0.660,0.268],[0.665,0.218]],[[0.580,0.510],[0.744,0.540]],[[0.575,0.530],[0.742,0.558]]],'#1c2c44',0.62);
+  sg([[[0.200,0.510],[0.330,0.468],[0.482,0.476],[0.622,0.476],[0.740,0.478]],[[0.468,0.178],[0.468,0.742]],[[0.290,0.545],[0.742,0.618]],[[0.180,0.338],[0.660,0.338]],[[0.244,0.145],[0.244,0.845]],[[0.650,0.218],[0.700,0.292],[0.742,0.368],[0.748,0.428],[0.745,0.508],[0.740,0.578],[0.728,0.638]],[[0.200,0.658],[0.720,0.658]],[[0.558,0.478],[0.590,0.680]],[[0.300,0.228],[0.310,0.552]]],'#20304a',1.1);
+  sg([[[0.200,0.510],[0.330,0.468],[0.482,0.476],[0.622,0.476],[0.740,0.478]]],'#26365e',2.2);
+  sg([[[0.650,0.218],[0.700,0.292],[0.742,0.368],[0.748,0.428],[0.745,0.508],[0.740,0.578],[0.728,0.638]]],'#1e3060',1.8);
+  ctx.strokeStyle='#2a4070';ctx.lineWidth=2.2;ctx.setLineDash([5,4]);ctx.beginPath();const[bb1x,bb1y]=px(0.748,0.428);ctx.moveTo(bb1x,bb1y);const[bb2x,bb2y]=px(0.858,0.418);ctx.lineTo(bb2x,bb2y);ctx.stroke();ctx.setLineDash([]);
+  MUNI_ROUTES.forEach(r=>drawPoly(r.pts,'rgba(0,0,0,0.55)',r.width+2.5));
+  MUNI_ROUTES.forEach(r=>drawPoly(r.pts,r.color,r.width));
+  drawPoly([[0.720,0.418],[0.692,0.428],[0.666,0.438],[0.638,0.448],[0.606,0.460],[0.572,0.472]],'rgba(255,255,255,0.13)',1.5);
+  drawPoly([[0.572,0.472],[0.536,0.488],[0.490,0.522],[0.458,0.542]],'rgba(255,255,255,0.10)',1.2);
+  const lgW=px(0.200,0)[0]-px(0,0)[0],lgH=px(0,0.138)[1]-px(0,0)[1];
+  const[lgx,lgy]=px(0.012,0.856);
+  ctx.fillStyle='rgba(5,10,20,0.80)';ctx.fillRect(lgx,lgy,lgW,lgH);
+  ctx.strokeStyle='rgba(255,255,255,0.10)';ctx.lineWidth=0.5;ctx.strokeRect(lgx,lgy,lgW,lgH);
+  ctx.textBaseline='middle';ctx.textAlign='left';let ly2=lgy+10;
+  ctx.font='bold 7px sans-serif';ctx.fillStyle='rgba(255,255,255,0.6)';ctx.fillText('MUNI METRO',lgx+7,ly2);ly2+=13;
+  Object.entries(MUNI_LINES).forEach(([k,{color,name}])=>{ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(lgx+7,ly2);ctx.lineTo(lgx+26,ly2);ctx.stroke();ctx.font='7px sans-serif';ctx.fillStyle='rgba(255,255,255,0.72)';ctx.fillText(name,lgx+30,ly2);ly2+=12;});
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='8px sans-serif';ctx.fillStyle='rgba(100,180,100,0.58)';
+  [[0.225,0.498,'Golden Gate Park'],[0.280,0.212,'Presidio'],[0.381,0.586,'Dolores'],[0.475,0.771,'McLaren'],[0.506,0.684,'Bernal']].forEach(([rx,ry,t])=>{const[x,y]=px(rx,ry);ctx.fillText(t,x,y);});
+  ctx.font='7px sans-serif';ctx.fillStyle='rgba(155,190,230,0.42)';
+  [{t:'Market St',rx:0.420,ry:0.458,a:-0.05},{t:'Van Ness',rx:0.456,ry:0.288,a:-1.571},{t:'Geary Blvd',rx:0.388,ry:0.326,a:0},{t:'Mission St',rx:0.448,ry:0.588,a:0.10},{t:'Embarcadero',rx:0.753,ry:0.438,a:1.571},{t:'Columbus',rx:0.632,ry:0.338,a:-0.56},{t:'Cesar Chavez',rx:0.408,ry:0.645,a:0},{t:'Divisadero',rx:0.358,ry:0.368,a:-1.571},{t:'19th Ave',rx:0.232,ry:0.378,a:-1.571},{t:'Folsom St',rx:0.646,ry:0.520,a:0.08},{t:'Broadway',rx:0.418,ry:0.254,a:0},{t:'Haight St',rx:0.308,ry:0.530,a:0},{t:'Oak / Fell',rx:0.318,ry:0.480,a:0}].forEach(({t,rx,ry,a})=>{const[x,y]=px(rx,ry);ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillText(t,0,0);ctx.restore();});
+  ctx.font='bold 8.5px sans-serif';ctx.fillStyle='rgba(255,255,255,0.15)';ctx.textAlign='center';
+  [['THE MISSION',0.440,0.630],['CASTRO',0.340,0.546],['SOMA',0.622,0.545],['NORTH BEACH',0.592,0.270],['HAIGHT-ASHBURY',0.248,0.508],['FINANCIAL',0.620,0.405],['TENDERLOIN',0.510,0.436],['NOB HILL',0.500,0.360],['CHINATOWN',0.558,0.330],['DOGPATCH',0.682,0.658],['MARINA',0.400,0.196],['RICHMOND',0.208,0.318],['SUNSET',0.195,0.598],['NOE VALLEY',0.390,0.648],['POTRERO',0.578,0.636],['BAYVIEW',0.700,0.718],['EXCELSIOR',0.398,0.758],['RUSSIAN HILL',0.545,0.284]].forEach(([t,rx,ry])=>{const[x,y]=px(rx,ry);ctx.fillText(t,x,y);});
+  ctx.font='6.5px sans-serif';ctx.fillStyle='rgba(180,208,255,0.48)';ctx.textAlign='center';
+  [['City Hall',0.476,0.470],['Oracle Pk',0.700,0.646],['Chase Ctr',0.650,0.698],['Ferry Bldg',0.736,0.398],['Coit Tower',0.612,0.250],['SF Gen',0.578,0.670]].forEach(([t,rx,ry])=>{const[x,y]=px(rx,ry);ctx.fillText('▪ '+t,x,y);});
+  ctx.font='7px sans-serif';ctx.fillStyle='rgba(100,140,200,0.48)';ctx.textAlign='left';ctx.fillText('Bay Bridge →',px(0.750,0.416)[0],px(0,0.416)[1]);
+  ctx.font='italic 8px sans-serif';ctx.fillStyle='rgba(80,130,180,0.28)';ctx.textAlign='center';ctx.fillText('San Francisco Bay',px(0.882,0.358)[0],px(0,0.358)[1]);ctx.fillText('Pacific Ocean',px(0.058,0.578)[0],px(0,0.578)[1]);
+  ctx.font='bold 7.5px sans-serif';ctx.fillStyle='rgba(220,200,120,0.36)';ctx.save();ctx.translate(...px(0.118,0.612));ctx.rotate(-Math.PI/2);ctx.fillText('OCEAN BEACH',0,0);ctx.restore();
+  ctx.font='6.5px sans-serif';ctx.fillStyle='rgba(180,220,180,0.36)';ctx.fillText('LANDS END',px(0.152,0.330)[0],px(0,0.330)[1]);ctx.fillText('BAKER BEACH',px(0.192,0.256)[0],px(0,0.256)[1]);
+}
+
 function draw(){
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#101520';ctx.fillRect(0,0,W,H);
-  ctx.beginPath();
-  landPts.forEach(([rx,ry],i)=>{const[x,y]=px(rx,ry);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
-  ctx.closePath();ctx.fillStyle='#1a2035';ctx.fill();
-  [[0.28,0.5,0.72,0.5],[0.28,0.42,0.72,0.42],[0.28,0.6,0.72,0.6],[0.28,0.68,0.72,0.68]].forEach(([x1,y1,x2,y2])=>{
-    const[a,b]=px(x1,y1),[c,d]=px(x2,y2);ctx.strokeStyle='#243050';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();
-  });
-  [0.38,0.46,0.54,0.62].forEach(x=>{const[a,b]=px(x,0.25),[,d]=px(x,0.80);ctx.strokeStyle='#243050';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(a,d);ctx.stroke();});
-  const[mx1,my1]=px(0.28,0.5),[mx2,my2]=px(0.72,0.5);ctx.strokeStyle='#2a3a60';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(mx1,my1);ctx.lineTo(mx2,my2);ctx.stroke();
+  drawMapBase();
 
   const visN=NEIGHBORHOODS.filter(n=>{if(activeCat==='all')return true;const src=activeCat==='happy'?HAPPY_VENUES:VENUES.filter(v=>v.cat===activeCat);return src.some(v=>v.nid===n.id);});
   visN.forEach(n=>{
-    const d=n.curve[hour];const[cx,cy]=px(n.cx,n.cy);const r=40+d*0.38;const col=dCol(d);
+    const raw=n.curve[hour];
+    const d=modToggles.sunset?Math.min(99,Math.round(raw*sunsetMult(hour,n.id))):raw;
+    const[cx,cy]=px(n.cx,n.cy);const r=40+d*0.38;const col=dCol(d);
     const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
     g.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},${0.34+d*0.004})`);
     g.addColorStop(0.55,`rgba(${col[0]},${col[1]},${col[2]},${0.12+d*0.002})`);
@@ -606,16 +786,25 @@ canvas.addEventListener('mousemove',e=>{
 
 canvas.addEventListener('click',e=>{if(hoverVenue){selectedVenue=hoverVenue;updateVenuePanel();draw();}});
 canvas.addEventListener('mouseleave',()=>{hoverVenue=null;document.getElementById('tooltip').style.display='none';draw();});
-document.getElementById('time-range').addEventListener('input',e=>{hour=+e.target.value;document.getElementById('time-display').textContent=fmt(hour);updateVenuePanel();draw();});
+document.getElementById('time-range').addEventListener('input',e=>{hour=sliderToHour(+e.target.value);document.getElementById('time-display').textContent=fmt(hour);updateVenuePanel();draw();});
 document.getElementById('play-btn').addEventListener('click',()=>{
   playing=!playing;document.getElementById('play-btn').innerHTML=playing?'&#9646;&#9646;':'&#9654;';
-  if(playing){playInt=setInterval(()=>{hour=(hour+1)%24;document.getElementById('time-range').value=hour;document.getElementById('time-display').textContent=fmt(hour);updateVenuePanel();draw();},550);}
+  if(playing){playInt=setInterval(()=>{
+    const slider=document.getElementById('time-range');
+    const nextPos=(+slider.value+1)%24;
+    slider.value=nextPos;
+    hour=sliderToHour(nextPos);
+    document.getElementById('time-display').textContent=fmt(hour);
+    updateVenuePanel();draw();
+  },550);}
   else clearInterval(playInt);
 });
 
 // Boot
 buildCats();
 games=mockGames();
+hour=currentHour;
+document.getElementById('time-range').value=hourToSlider(currentHour);
 draw();
 document.getElementById('time-display').textContent=fmt(currentHour);
 document.getElementById('date-display').textContent=getDateStr()+' · San Francisco';
