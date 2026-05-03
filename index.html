@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SF Crowd Heatmap</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-bg: #0f1117;
+      --color-surface: #1a1f2e;
+      --color-surface2: #222736;
+      --color-border: rgba(255,255,255,0.08);
+      --color-border2: rgba(255,255,255,0.15);
+      --color-text: #f1f5f9;
+      --color-text2: rgba(255,255,255,0.55);
+      --color-text3: rgba(255,255,255,0.35);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    body { font-family: var(--font); background: var(--color-bg); color: var(--color-text); min-height: 100vh; }
+    .app { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+    .app-header { margin-bottom: 20px; }
+    .app-header h1 { font-size: 20px; font-weight: 500; }
+    .app-header p { font-size: 13px; color: var(--color-text2); margin-top: 4px; }
+
+    /* MAP */
+    #canvas-wrap { position: relative; width: 100%; border-radius: var(--radius-lg); overflow: hidden; background: #101520; margin-bottom: 20px; }
+    canvas { display: block; width: 100%; }
+    #overlay-info { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.62); border-radius: var(--radius-md); padding: 8px 12px; color: #fff; pointer-events: none; }
+    .time-big { font-size: 19px; font-weight: 500; }
+    .time-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    #weather-badge { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.62); border-radius: var(--radius-md); padding: 8px 12px; color: #fff; font-size: 12px; pointer-events: none; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    #weather-badge .wtemp { font-size: 18px; font-weight: 500; }
+    #weather-badge .wcond { font-size: 11px; color: rgba(255,255,255,0.5); }
+    #weather-badge .wextra { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+    #event-banner { position: absolute; bottom: 52px; left: 12px; right: 12px; border-radius: var(--radius-md); padding: 7px 12px; color: #fff; font-size: 11px; display: none; justify-content: space-between; align-items: center; }
+    #event-banner .etitle { font-weight: 500; font-size: 12px; }
+    #event-banner .emeta { color: rgba(255,255,255,0.55); font-size: 10px; margin-top: 2px; }
+    #event-banner .ebadge { border-radius: 99px; padding: 3px 9px; font-size: 10px; white-space: nowrap; margin-left: 10px; flex-shrink: 0; }
+    #legend { position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.6); border-radius: var(--radius-md); padding: 7px 11px; color: #fff; font-size: 10px; }
+    #legend .grad { height: 5px; width: 100px; border-radius: 3px; background: linear-gradient(to right,#2563eb,#22c55e,#facc15,#f97316,#ef4444); margin: 3px 0; }
+    #legend .lrow { display: flex; justify-content: space-between; width: 100px; color: rgba(255,255,255,0.45); }
+    #legend .licons { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+    #legend .li { display: flex; align-items: center; gap: 5px; color: rgba(255,255,255,0.55); font-size: 10px; }
+    #api-status-bar { position: absolute; bottom: 12px; right: 12px; display: flex; gap: 5px; }
+    .api-dot-wrap { display: flex; align-items: center; gap: 3px; font-size: 9px; color: rgba(255,255,255,0.4); background: rgba(0,0,0,0.5); padding: 3px 6px; border-radius: 99px; }
+    .api-dot { width: 6px; height: 6px; border-radius: 50%; }
+    #tooltip { position: absolute; background: rgba(0,0,0,0.85); border-radius: var(--radius-md); padding: 8px 12px; color: #fff; font-size: 12px; pointer-events: none; display: none; white-space: nowrap; line-height: 1.6; z-index: 10; }
+
+    /* CONTROLS */
+    .controls { display: flex; flex-direction: column; gap: 18px; }
+    .section-label { font-size: 11px; color: var(--color-text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+    .cat-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cat-btn { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 99px; font-size: 12px; border: 0.5px solid var(--color-border2); background: var(--color-surface); color: var(--color-text2); cursor: pointer; transition: background 0.15s; user-select: none; }
+    .cat-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .cat-btn.active { color: #fff; border-color: transparent; }
+    .cat-btn:hover { background: var(--color-surface2); }
+    .time-section { display: flex; flex-direction: column; gap: 6px; }
+    .time-track { display: flex; align-items: center; gap: 12px; }
+    input[type=range] { flex: 1; accent-color: #3b82f6; height: 4px; }
+    #play-btn { width: 34px; height: 34px; border-radius: 50%; border: 0.5px solid var(--color-border2); background: var(--color-surface); color: var(--color-text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; transition: background 0.15s; }
+    #play-btn:hover { background: var(--color-surface2); }
+    .hour-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text3); padding: 0 2px; }
+    .mod-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .mod-chip { padding: 4px 10px; border-radius: 99px; font-size: 11px; border: 0.5px solid var(--color-border); color: var(--color-text2); display: flex; align-items: center; gap: 5px; }
+    .mod-chip .ind { width: 6px; height: 6px; border-radius: 50%; background: #475569; }
+    .mod-chip.on .ind { background: #f97316; }
+    .mod-chip.on { color: var(--color-text); border-color: var(--color-border2); }
+    .mod-chip.live .ind { background: #22c55e; }
+    .mod-chip.live { color: var(--color-text); border-color: var(--color-border2); }
+
+    /* VENUE PANEL */
+    .venue-panel { background: var(--color-surface); border: 0.5px solid var(--color-border2); border-radius: var(--radius-lg); padding: 14px 16px; }
+    .vname { font-size: 15px; font-weight: 500; }
+    .vmeta { font-size: 12px; color: var(--color-text2); margin-top: 3px; margin-bottom: 12px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .blabel { font-size: 12px; color: var(--color-text2); width: 80px; flex-shrink: 0; }
+    .bar-track { flex: 1; height: 5px; background: var(--color-surface2); border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.35s, background 0.35s; }
+    .bar-pct { font-size: 12px; font-weight: 500; width: 32px; text-align: right; }
+    #hour-chart { display: flex; align-items: flex-end; gap: 2px; height: 44px; margin-top: 10px; }
+    .hbar { flex: 1; border-radius: 2px 2px 0 0; min-width: 3px; }
+    .chart-label { font-size: 11px; color: var(--color-text3); margin-bottom: 4px; }
+    .note { font-size: 11px; margin-top: 6px; }
+    .note-boost { color: #f97316; }
+    .note-happy { color: #facc15; }
+    .note-sunset { color: #a78bfa; }
+    .npills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+    .npill { padding: 3px 9px; border-radius: 99px; font-size: 11px; border: 0.5px solid var(--color-border); cursor: pointer; background: var(--color-surface2); color: var(--color-text2); transition: background 0.15s; }
+    .npill:hover { border-color: var(--color-border2); }
+    .npill.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+    /* TODO banner */
+    .todo-card { background: var(--color-surface); border-radius: var(--radius-lg); border-left: 2px solid #f97316; border-top: 0.5px solid var(--color-border); border-right: 0.5px solid var(--color-border); border-bottom: 0.5px solid var(--color-border); padding: 12px 14px; font-size: 12px; color: var(--color-text2); }
+    .todo-card strong { color: var(--color-text); font-weight: 500; font-size: 13px; }
+    .todo-card ul { margin: 8px 0 0 16px; line-height: 2; }
+    .todo-card code { background: var(--color-surface2); padding: 1px 5px; border-radius: 4px; font-size: 11px; color: #93c5fd; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <h1>SF Crowd Heatmap</h1>
+    <p>Live crowd predictions for bars and restaurants across San Francisco</p>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="map" height="400"></canvas>
+    <div id="overlay-info">
+      <div class="time-big" id="time-display">--</div>
+      <div class="time-sub" id="date-display">San Francisco</div>
+    </div>
+    <div id="weather-badge">
+      <div class="wtemp" id="w-temp">--</div>
+      <div class="wcond" id="w-cond">Loading...</div>
+      <div class="wextra" id="w-sunset"></div>
+    </div>
+    <div id="event-banner">
+      <div>
+        <div class="etitle" id="ev-title"></div>
+        <div class="emeta" id="ev-meta"></div>
+      </div>
+      <div class="ebadge" id="ev-badge"></div>
+    </div>
+    <div id="legend">
+      <div style="color:rgba(255,255,255,0.55);margin-bottom:2px;">Crowd density</div>
+      <div class="grad"></div>
+      <div class="lrow"><span>Quiet</span><span>Packed</span></div>
+      <div class="licons">
+        <div class="li"><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#f97316"/></svg>Muni stop (active)</div>
+        <div class="li"><svg width="10" height="10"><circle cx="5" cy="5" r="4" fill="#3a2a1a"/></svg>Muni stop (closed)</div>
+        <div class="li"><span style="font-size:11px;color:#facc15;font-weight:700">$</span><span style="margin-left:3px">Happy hour active</span></div>
+      </div>
+    </div>
+    <div id="api-status-bar"></div>
+    <div id="tooltip"></div>
+  </div>
+
+  <div class="controls">
+    <div>
+      <div class="section-label">Business type</div>
+      <div class="cat-row" id="cat-row"></div>
+    </div>
+
+    <div>
+      <div class="section-label">Active modifiers</div>
+      <div class="mod-row" id="mod-row">
+        <div class="mod-chip"><span class="ind"></span>Loading live data...</div>
+      </div>
+    </div>
+
+    <div class="time-section">
+      <div class="section-label">Time of day</div>
+      <div class="time-track">
+        <button id="play-btn">&#9654;</button>
+        <input type="range" id="time-range" min="0" max="23" value="22" step="1">
+      </div>
+      <div class="hour-labels">
+        <span>12a</span><span>3a</span><span>6a</span><span>9a</span>
+        <span>12p</span><span>3p</span><span>6p</span><span>9p</span><span>11p</span>
+      </div>
+    </div>
+
+    <div class="venue-panel">
+      <div class="vname" id="v-name">Select a venue on the map</div>
+      <div class="vmeta" id="v-meta">Click any dot or $ to see crowd forecast</div>
+      <div class="bar-row" id="bar-row" style="display:none">
+        <div class="blabel">Crowd now</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+        <div class="bar-pct" id="bar-pct"></div>
+      </div>
+      <div id="chart-wrap" style="display:none">
+        <div class="chart-label">All-day forecast (modifiers applied)</div>
+        <div id="hour-chart"></div>
+      </div>
+      <div class="note note-boost" id="boost-note" style="display:none"></div>
+      <div class="note note-happy" id="happy-note" style="display:none"></div>
+      <div class="note note-sunset" id="sunset-note" style="display:none"></div>
+      <div class="section-label" style="margin-top:14px;">Browse by neighborhood</div>
+      <div class="npills" id="npills"></div>
+    </div>
+
+    <div class="todo-card">
+      <strong>APIs pending — add keys to <code>.env</code></strong>
+      <ul>
+        <li><strong>OpenWeatherMap</strong> — <a href="https://openweathermap.org/users/sign_up" style="color:#93c5fd">openweathermap.org</a> → free key → set <code>OPENWEATHER_KEY</code></li>
+        <li><strong>511.org Muni</strong> — <a href="https://511.org/open-data/token" style="color:#93c5fd">511.org/open-data/token</a> → instant free key → set <code>MUNI_511_KEY</code> — enables real-time arrivals &amp; alerts</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONFIG — paste keys here or set as env vars
+// ─────────────────────────────────────────────
+const CONFIG = {
+  OPENWEATHER_KEY: null,           // TODO: add key
+  MUNI_511_KEY:    null,           // TODO: add key
+  CALENDARIFIC_KEY:'Nrm1IyUZfDTupErZvSvPDPw2TyRHp1MZ',
+  SF_LAT: 37.7749,
+  SF_LNG: -122.4194,
+};
+
+const W=680, H=400;
+const now=new Date();
+const currentHour=now.getHours();
+
+const CATEGORIES=[
+  {id:'all',   label:'All venues',         color:'#94a3b8',dot:'#94a3b8'},
+  {id:'pizza', label:'Pizza by the slice', color:'#ef4444',dot:'#ef4444'},
+  {id:'mex',   label:'Mexican',            color:'#22c55e',dot:'#22c55e'},
+  {id:'irish', label:'Irish bars',         color:'#4ade80',dot:'#16a34a'},
+  {id:'dive',  label:'Dive bars',          color:'#a78bfa',dot:'#7c3aed'},
+  {id:'cock',  label:'Cocktail lounges',   color:'#f472b6',dot:'#db2777'},
+  {id:'happy', label:'Happy hour bars',    color:'#facc15',dot:'#ca8a04'},
+];
+
+const NEIGHBORHOODS=[
+  {id:'mission',name:'The Mission',cx:0.42,cy:0.60,curve:[5,4,3,3,3,4,5,6,8,10,12,14,16,18,22,26,32,42,58,70,80,85,75,55]},
+  {id:'castro', name:'Castro',     cx:0.36,cy:0.57,curve:[4,3,3,3,3,4,5,6,8,10,11,13,15,18,22,26,30,38,52,65,78,82,70,48]},
+  {id:'soma',   name:'SoMa',       cx:0.52,cy:0.52,curve:[8,6,5,4,4,5,12,22,55,72,75,70,65,60,58,55,50,58,70,72,65,55,40,20]},
+  {id:'nb',     name:'North Beach',cx:0.54,cy:0.32,curve:[6,5,4,4,4,5,7,9,15,20,28,35,40,45,48,50,52,58,72,80,75,65,45,25]},
+  {id:'haight', name:'Haight',     cx:0.32,cy:0.52,curve:[4,3,3,3,3,4,5,7,10,14,20,28,36,42,46,48,44,42,48,52,55,45,30,15]},
+  {id:'fidi',   name:'FiDi',       cx:0.53,cy:0.42,curve:[3,2,2,2,2,3,8,30,72,85,88,80,55,45,30,22,15,12,10,8,6,5,4,3]},
+  {id:'tender', name:'Tenderloin', cx:0.50,cy:0.46,curve:[15,14,13,12,12,14,18,22,30,38,42,45,45,44,42,40,38,40,45,48,50,45,35,22]},
+  {id:'nob',    name:'Nob Hill',   cx:0.49,cy:0.38,curve:[4,3,3,3,3,4,5,8,14,20,26,32,36,40,42,44,42,40,44,46,42,35,22,12]},
+  {id:'china',  name:'Chinatown',  cx:0.53,cy:0.37,curve:[3,2,2,2,2,3,5,8,18,30,40,45,48,50,48,44,38,30,20,15,10,7,5,3]},
+  {id:'dog',    name:'Dogpatch',   cx:0.60,cy:0.65,curve:[3,2,2,2,2,3,5,12,30,42,45,40,35,30,28,32,35,42,50,52,45,35,20,8]},
+];
+
+const MUNI_STOPS=[
+  {name:'Embarcadero',     line:'F/J/K/L/M/N',cx:0.625,cy:0.42, runStart:5,runEnd:1},
+  {name:'Montgomery St',   line:'J/K/L/M/N',  cx:0.575,cy:0.43, runStart:5,runEnd:1},
+  {name:'Powell St',       line:'J/K/L/M/N',  cx:0.545,cy:0.44, runStart:5,runEnd:1},
+  {name:'Civic Center',    line:'J/K/L/M/N',  cx:0.515,cy:0.45, runStart:5,runEnd:1},
+  {name:'16th St Mission', line:'BART+Muni',  cx:0.435,cy:0.595,runStart:5,runEnd:1},
+  {name:'24th St Mission', line:'BART+Muni',  cx:0.435,cy:0.645,runStart:5,runEnd:1},
+  {name:'Castro Station',  line:'K/L/M',      cx:0.355,cy:0.555,runStart:5,runEnd:1},
+  {name:'Church St',       line:'J',          cx:0.375,cy:0.545,runStart:5,runEnd:1},
+  {name:'Van Ness',        line:'J/K/L/M',    cx:0.465,cy:0.465,runStart:5,runEnd:1},
+  {name:'Forest Hill',     line:'K/L/M',      cx:0.285,cy:0.585,runStart:5,runEnd:1},
+  {name:'West Portal',     line:'K/L/M',      cx:0.27, cy:0.60, runStart:5,runEnd:1},
+  {name:'Caltrain Station',line:'N/T',        cx:0.565,cy:0.58, runStart:5,runEnd:1},
+  {name:'4th & King',      line:'N',          cx:0.565,cy:0.565,runStart:5,runEnd:1},
+];
+
+const VENUES=[
+  {name:"Golden Boy Pizza",  cat:'pizza',nid:'nb',     cx:0.535,cy:0.29, addr:"North Beach · Cash only",          gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,0,0,15,25,38,45,50,52,48,44,62,78,88,90,82,50]},
+  {name:"Escape from NY",    cat:'pizza',nid:'haight', cx:0.305,cy:0.50, addr:"Haight · Late night slices",       gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,12,18,22,28,32,36,38,40,38,42,55,65,70,72,60,35]},
+  {name:"Arinell Pizza",     cat:'pizza',nid:'mission',cx:0.41, cy:0.57, addr:"Mission · NY-style slices",        gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,10,15,22,30,38,42,45,46,44,46,58,68,72,70,55,28]},
+  {name:"La Taqueria",       cat:'mex',  nid:'mission',cx:0.43, cy:0.63, addr:"Mission · James Beard winner",     gameboost:[],            rainpenalty:5,  curve:[0,0,0,0,0,0,0,0,0,12,20,30,55,70,72,65,58,52,46,38,22,12,5,0]},
+  {name:"El Farolito",       cat:'mex',  nid:'mission',cx:0.42, cy:0.66, addr:"Mission · Open 24 hours",          gameboost:[],            rainpenalty:0,  curve:[5,4,4,3,3,4,6,10,18,22,30,40,55,62,60,55,50,55,65,72,78,80,72,55]},
+  {name:"Gracias Madre",     cat:'mex',  nid:'mission',cx:0.395,cy:0.58, addr:"Mission · Plant-based cocktails",  gameboost:[],            rainpenalty:8,  curve:[0,0,0,0,0,0,0,0,0,0,10,20,35,48,55,60,62,68,75,72,60,40,18,0]},
+  {name:"Plough & Stars",    cat:'irish',nid:'nb',     cx:0.545,cy:0.30, addr:"North Beach · Live trad sessions", gameboost:['nfl','nba'], rainpenalty:0,  curve:[5,4,3,3,3,4,5,6,8,10,14,18,22,28,32,36,40,50,68,80,85,82,72,45]},
+  {name:"Durty Nelly's",     cat:'irish',nid:'tender', cx:0.505,cy:0.44, addr:"Tenderloin · Full Irish menu",     gameboost:['nfl'],       rainpenalty:0,  curve:[4,3,3,3,3,4,5,8,14,20,28,35,40,44,46,48,50,55,65,72,75,70,55,30]},
+  {name:"The Chieftain",     cat:'irish',nid:'soma',   cx:0.525,cy:0.54, addr:"SoMa · 20+ sports screens",       gameboost:['nfl','nba','mlb'],rainpenalty:0,curve:[4,3,3,3,3,4,5,8,15,22,30,38,42,45,50,60,65,68,75,78,72,60,38,18]},
+  {name:"The Uptown",        cat:'dive', nid:'mission',cx:0.435,cy:0.61, addr:"Mission · Pool tables",            gameboost:[],            rainpenalty:5,  curve:[3,2,2,2,2,3,4,5,6,10,14,18,22,26,30,35,40,50,62,72,78,80,70,45]},
+  {name:"Hi Dive",           cat:'dive', nid:'dog',    cx:0.595,cy:0.67, addr:"Dogpatch · Waterfront live music", gameboost:['mlb'],       rainpenalty:15, curve:[2,2,2,2,2,2,3,4,5,8,12,16,20,24,28,32,38,48,60,68,72,65,48,22]},
+  {name:"Smuggler's Cove",   cat:'cock', nid:'haight', cx:0.32, cy:0.505,addr:"Haight · 550+ rums, tiki",         gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,0,0,0,5,12,18,22,28,32,40,58,72,82,85,78,50]},
+  {name:"Pagan Idol",        cat:'cock', nid:'fidi',   cx:0.525,cy:0.44, addr:"FiDi · Elaborate tiki lounge",     gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,0,5,10,15,22,28,32,35,38,48,65,78,82,80,65,35]},
+  {name:"Elixir",            cat:'cock', nid:'mission',cx:0.405,cy:0.55, addr:"Mission · Oldest craft cocktail bar",gameboost:[],           rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,0,5,12,20,30,38,42,48,52,58,68,75,80,78,65,38]},
+];
+
+const HAPPY_VENUES=[
+  {name:"The Buena Vista",    cat:'happy',nid:'nb',     cx:0.600,cy:0.285,addr:"North Beach · Famous Irish coffees",     happyStart:4, happyEnd:7, gameboost:[],         rainpenalty:0,  curve:[5,4,3,3,4,5,6,8,12,16,22,28,32,36,38,42,44,48,55,60,58,50,38,18]},
+  {name:"Vesuvio Cafe",       cat:'happy',nid:'nb',     cx:0.555,cy:0.295,addr:"North Beach · Beat Generation landmark", happyStart:16,happyEnd:19,gameboost:[],         rainpenalty:0,  curve:[4,3,3,3,3,4,5,7,10,14,20,28,36,42,46,52,58,62,68,72,65,52,35,18]},
+  {name:"Trick Dog",          cat:'happy',nid:'mission',cx:0.415,cy:0.565,addr:"Mission · Award-winning cocktails",      happyStart:17,happyEnd:19,gameboost:[],         rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,0,5,10,18,28,36,42,48,55,62,72,78,75,60,40,15]},
+  {name:"Bloodhound",         cat:'happy',nid:'soma',   cx:0.505,cy:0.535,addr:"SoMa · Full bar, great HH deals",        happyStart:16,happyEnd:19,gameboost:['nfl','nba'],rainpenalty:0,  curve:[3,2,2,2,2,3,5,8,14,20,26,32,38,42,46,52,58,65,72,75,68,55,35,15]},
+  {name:"Lone Palm",          cat:'happy',nid:'mission',cx:0.390,cy:0.600,addr:"Mission · Neighborhood stalwart",         happyStart:17,happyEnd:20,gameboost:[],         rainpenalty:5,  curve:[3,2,2,2,2,3,4,5,8,12,16,20,26,32,36,42,48,56,65,70,65,52,34,14]},
+  {name:"Specs' Twelve Adler",cat:'happy',nid:'nb',     cx:0.548,cy:0.308,addr:"North Beach · Cash-only dive classic",    happyStart:15,happyEnd:18,gameboost:[],         rainpenalty:0,  curve:[4,3,3,3,3,4,5,7,10,14,20,28,36,42,50,58,62,65,68,65,55,42,28,12]},
+  {name:"Zeitgeist",          cat:'happy',nid:'mission',cx:0.41, cy:0.53, addr:"Mission · Beer garden, huge HH",          happyStart:12,happyEnd:18,gameboost:['nfl'],    rainpenalty:20, curve:[3,2,2,2,2,3,4,5,8,12,18,28,40,52,60,65,70,72,75,78,72,62,42,18]},
+  {name:"Kezar Pub",          cat:'happy',nid:'haight', cx:0.310,cy:0.515,addr:"Haight · Near Golden Gate Park",          happyStart:16,happyEnd:19,gameboost:['nfl','mlb'],rainpenalty:5, curve:[3,2,2,2,2,3,4,6,10,14,18,24,30,36,40,46,52,58,65,68,62,50,32,12]},
+];
+
+const HOLIDAY_PROFILES={
+  "St. Patrick's Day": {color:'#16a34a',bg:'rgba(22,163,74,0.85)',  boosts:{irish:0.5,dive:0.25,happy:0.2},  label:"Irish bars packed · green beer flowing"},
+  "Cinco de Mayo":     {color:'#dc2626',bg:'rgba(185,28,28,0.85)',  boosts:{mex:0.5,happy:0.2,cock:0.15},    label:"Mexican restaurants & bars surging"},
+  "New Year's Eve":    {color:'#7c3aed',bg:'rgba(124,58,237,0.85)', boosts:{cock:0.4,happy:0.35,dive:0.25,irish:0.2},label:"All bars near capacity tonight"},
+  "New Year's Day":    {color:'#3b82f6',bg:'rgba(59,130,246,0.85)', boosts:{pizza:0.3},                      label:"Late risers · pizza and recovery food"},
+  "Independence Day":  {color:'#dc2626',bg:'rgba(185,28,28,0.85)',  boosts:{dive:0.35,happy:0.3,irish:0.2},  label:"Bars filling up for fireworks crowds"},
+  "Thanksgiving Day":  {color:'#b45309',bg:'rgba(180,83,9,0.85)',   boosts:{dive:0.2,happy:0.15},            label:"Bars active · Thanksgiving Eve effect"},
+  "Christmas Day":     {color:'#15803d',bg:'rgba(21,128,61,0.85)',   boosts:{},                               label:"Most venues closed · quiet city"},
+  "Labor Day":         {color:'#1d4ed8',bg:'rgba(29,78,216,0.85)',  boosts:{dive:0.3,happy:0.25},            label:"Long weekend · bars busy all day"},
+  "Memorial Day":      {color:'#1d4ed8',bg:'rgba(29,78,216,0.85)',  boosts:{dive:0.3,happy:0.25},            label:"Long weekend · bars busy all day"},
+};
+
+const landPts=[[0.28,0.25],[0.40,0.20],[0.54,0.17],[0.67,0.22],[0.74,0.32],[0.76,0.46],[0.73,0.62],[0.72,0.80],[0.28,0.80]];
+let hour=currentHour,activeCat='all',selectedVenue=null,hoverVenue=null,playing=false,playInt=null;
+let weather={temp:62,condition:'Partly cloudy',isRaining:false,rainIntensity:0,source:'mock'};
+let games=[],holidays=[],sunsetHour=20,sunriseHour=6;
+let apiStatus={weather:'mock',sports:'loading',holidays:'loading',sunrise:'loading',muni:'mock'};
+
+const canvas=document.getElementById('map');
+const ctx=canvas.getContext('2d');
+canvas.width=W*2;canvas.height=H*2;ctx.scale(2,2);
+
+const px=(rx,ry)=>[rx*W,ry*H];
+const dCol=d=>d<15?[37,99,235]:d<35?[34,197,94]:d<55?[250,204,21]:d<75?[249,115,22]:[239,68,68];
+const dHex=d=>d<15?'#2563eb':d<35?'#22c55e':d<55?'#facc15':d<75?'#f97316':'#ef4444';
+const dLabel=d=>d<15?'Very quiet':d<35?'Quiet':d<55?'Moderate':d<75?'Busy':'Very busy';
+const fmt=h=>h===0?'12:00 AM':h<12?`${h}:00 AM`:h===12?'12:00 PM':`${h-12}:00 PM`;
+const getDateStr=()=>now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+const muniRunning=(h,s)=>s.runEnd<s.runStart?h>=s.runStart||h<=s.runEnd:h>=s.runStart&&h<=s.runEnd;
+const happyState=(h,v)=>h<v.happyStart||h>=v.happyEnd?'off':h===v.happyEnd-1?'ending':'on';
+const happyBr=(h,v)=>{const s=happyState(h,v);return s==='off'?0:s==='ending'?0.45:1-(h-v.happyStart)/(v.happyEnd-v.happyStart)*0.3;};
+const sunsetMult=h=>{const d=h-sunsetHour;return(d<-1||d>3)?1:1+0.18*Math.exp(-0.5*Math.pow(d-0.5,2));};
+const holBoostForCat=cat=>{let b=0;holidays.forEach(hol=>{const p=HOLIDAY_PROFILES[hol];if(p&&p.boosts[cat])b=Math.max(b,p.boosts[cat]);});return b;};
+
+function applyModifiers(venue,baseCurve){
+  const hb=holBoostForCat(venue.cat);
+  return baseCurve.map((val,h)=>{
+    let v=val;
+    games.forEach(g=>{if(venue.gameboost&&venue.gameboost.includes(g.league)){const dist=Math.abs(h-g.gameHour);if(dist<=3){const b=g.boostMagnitude*(1-dist/4);v=Math.min(99,Math.round(v+(100-v)*b));}}});
+    if(hb>0)v=Math.min(99,Math.round(v+(100-v)*hb));
+    v=Math.min(99,Math.round(v*sunsetMult(h)));
+    if(weather.isRaining&&venue.rainpenalty>0)v=Math.max(0,Math.round(v-venue.rainpenalty*weather.rainIntensity));
+    return v;
+  });
+}
+
+// ── MOCK FALLBACKS
+const mockWeather=()=>({temp:62,condition:'Partly cloudy (mock)',isRaining:now.getDay()===0,rainIntensity:0.5,source:'mock'});
+const mockGames=()=>{const day=now.getDay(),g=[];if(day===0)g.push({league:'nfl',teams:'49ers vs Rams',time:'1:05 PM',boostMagnitude:0.35,gameHour:13});if(day===1)g.push({league:'nba',teams:'Warriors vs Lakers',time:'7:30 PM',boostMagnitude:0.28,gameHour:19});if(day===3||day===5)g.push({league:'mlb',teams:'Giants vs Dodgers',time:'6:45 PM',boostMagnitude:0.22,gameHour:18});return g;};
+
+// ── LIVE: Sunrise-Sunset (no key)
+async function fetchSunrise(){
+  try{
+    const r=await fetch(`https://api.sunrise-sunset.org/json?lat=${CONFIG.SF_LAT}&lng=${CONFIG.SF_LNG}&formatted=0`);
+    const d=await r.json();
+    if(d.status==='OK'){sunriseHour=new Date(d.results.sunrise).getHours();sunsetHour=new Date(d.results.sunset).getHours();apiStatus.sunrise='live';}
+  }catch(e){apiStatus.sunrise='mock';}
+}
+
+// ── LIVE: TheSportsDB (key=3)
+async function fetchGames(){
+  try{
+    const dateStr=now.toISOString().split('T')[0];
+    const sfTeams=['San Francisco','Golden State','49ers','Giants','Warriors'];
+    const leagues=[
+      {slug:'American+Football',id:'nfl',boost:0.35,fallbackHour:13},
+      {slug:'Basketball',       id:'nba',boost:0.28,fallbackHour:19},
+      {slug:'Baseball',         id:'mlb',boost:0.22,fallbackHour:18},
+    ];
+    const found=[];
+    for(const lg of leagues){
+      const r=await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${dateStr}&s=${lg.slug}`);
+      const d=await r.json();
+      (d.events||[]).filter(e=>sfTeams.some(t=>e.strHomeTeam&&e.strHomeTeam.includes(t))).forEach(e=>{
+        found.push({league:lg.id,teams:`${e.strHomeTeam} vs ${e.strAwayTeam}`,time:e.strTime||'TBD',boostMagnitude:lg.boost,gameHour:e.strTimestamp?new Date(e.strTimestamp).getHours():lg.fallbackHour});
+      });
+    }
+    games=found.length?found:mockGames();
+    apiStatus.sports=found.length?'live':'mock';
+  }catch(e){games=mockGames();apiStatus.sports='mock';}
+}
+
+// ── LIVE: Calendarific
+async function fetchHolidays(){
+  try{
+    const y=now.getFullYear(),m=now.getMonth()+1,day=now.getDate();
+    const r=await fetch(`https://calendarific.com/api/v2/holidays?api_key=${CONFIG.CALENDARIFIC_KEY}&country=US&year=${y}&month=${m}&day=${day}&type=national`);
+    const d=await r.json();
+    holidays=(d.response&&d.response.holidays)?d.response.holidays.map(h=>h.name).filter(n=>HOLIDAY_PROFILES[n]):[];
+    apiStatus.holidays='live';
+  }catch(e){holidays=[];apiStatus.holidays='mock';}
+}
+
+// ── LIVE: OpenWeatherMap (key pending — falls back to mock)
+async function fetchWeather(){
+  if(CONFIG.OPENWEATHER_KEY){
+    try{
+      const r=await fetch(`https://api.openweathermap.org/data/2.5/weather?q=San+Francisco&appid=${CONFIG.OPENWEATHER_KEY}&units=imperial`);
+      const d=await r.json();
+      const cond=d.weather[0].main;
+      const isRaining=['Rain','Drizzle','Thunderstorm'].includes(cond);
+      weather={temp:Math.round(d.main.temp),condition:d.weather[0].description,isRaining,rainIntensity:isRaining?(d.rain?.['1h']??0.5):0,source:'live'};
+      apiStatus.weather='live';
+    }catch(e){weather=mockWeather();apiStatus.weather='mock';}
+  } else {weather=mockWeather();apiStatus.weather='mock';}
+}
+
+// ── 511 Muni (key pending — falls back to static schedule)
+// TODO: replace with live fetch once MUNI_511_KEY is set
+// GET https://api.511.org/transit/StopMonitoring?api_key=${CONFIG.MUNI_511_KEY}&agency=SF&stopCode=STOP_ID
+// Parse ServiceDelivery.StopMonitoringDelivery.MonitoredStopVisit for real arrival times
+
+function updateWeatherBadge(){
+  document.getElementById('w-temp').textContent=`${weather.temp}°F`;
+  document.getElementById('w-cond').textContent=weather.condition;
+  document.getElementById('w-sunset').textContent=`Sunset ${fmt(sunsetHour)} · Sunrise ${fmt(sunriseHour)}`;
+}
+
+function updateApiStatusBar(){
+  const bar=document.getElementById('api-status-bar');bar.innerHTML='';
+  [{label:'Weather',key:'weather'},{label:'Sports',key:'sports'},{label:'Holidays',key:'holidays'},{label:'Sunrise',key:'sunrise'},{label:'Muni',key:'muni'}].forEach(a=>{
+    const s=apiStatus[a.key];
+    const color=s==='live'?'#22c55e':s==='mock'?'#f97316':'#475569';
+    const wrap=document.createElement('div');wrap.className='api-dot-wrap';
+    wrap.innerHTML=`<div class="api-dot" style="background:${color}"></div>${a.label}`;
+    wrap.title=`${a.label}: ${s}`;
+    bar.appendChild(wrap);
+  });
+}
+
+function updateModifiers(){
+  updateApiStatusBar();
+  const row=document.getElementById('mod-row');row.innerHTML='';
+  const chips=[];
+  chips.push({label:`${weather.temp}°F · ${weather.condition}`,active:weather.isRaining,live:apiStatus.weather==='live'});
+  chips.push({label:`Sunset ${fmt(sunsetHour)}`,active:true,live:apiStatus.sunrise==='live'});
+  games.forEach(g=>chips.push({label:`${g.league.toUpperCase()}: ${g.teams}`,active:true,live:apiStatus.sports==='live'}));
+  holidays.forEach(h=>chips.push({label:`Holiday: ${h}`,active:true,live:true}));
+  chips.forEach(m=>{
+    const chip=document.createElement('div');
+    chip.className='mod-chip'+(m.live?' live':m.active?' on':'');
+    chip.innerHTML=`<span class="ind"></span>${m.label}`;
+    row.appendChild(chip);
+  });
+}
+
+function updateBanner(){
+  const banner=document.getElementById('event-banner');
+  const events=[];
+  holidays.forEach(h=>{const p=HOLIDAY_PROFILES[h];if(p)events.push({title:h,meta:p.label,color:p.color,bg:p.bg,badge:'Holiday'});});
+  games.forEach(g=>events.push({title:`${g.league.toUpperCase()}: ${g.teams}`,meta:`${g.time} · nearby bars boosted`,color:'#93c5fd',bg:'rgba(15,30,60,0.88)',badge:'Game day'}));
+  if(events.length){
+    const ev=events[0];
+    banner.style.display='flex';banner.style.background=ev.bg;banner.style.borderColor=ev.color+'55';
+    document.getElementById('ev-title').textContent=ev.title;
+    document.getElementById('ev-meta').textContent=ev.meta;
+    const badge=document.getElementById('ev-badge');
+    badge.textContent=ev.badge;badge.style.background=ev.color+'33';badge.style.color=ev.color;
+  } else banner.style.display='none';
+}
+
+function getVisibleVenues(){
+  if(activeCat==='all')return[...VENUES,...HAPPY_VENUES];
+  if(activeCat==='happy')return HAPPY_VENUES;
+  return VENUES.filter(v=>v.cat===activeCat);
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#101520';ctx.fillRect(0,0,W,H);
+  ctx.beginPath();
+  landPts.forEach(([rx,ry],i)=>{const[x,y]=px(rx,ry);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.closePath();ctx.fillStyle='#1a2035';ctx.fill();
+  [[0.28,0.5,0.72,0.5],[0.28,0.42,0.72,0.42],[0.28,0.6,0.72,0.6],[0.28,0.68,0.72,0.68]].forEach(([x1,y1,x2,y2])=>{
+    const[a,b]=px(x1,y1),[c,d]=px(x2,y2);ctx.strokeStyle='#243050';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();
+  });
+  [0.38,0.46,0.54,0.62].forEach(x=>{const[a,b]=px(x,0.25),[,d]=px(x,0.80);ctx.strokeStyle='#243050';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(a,d);ctx.stroke();});
+  const[mx1,my1]=px(0.28,0.5),[mx2,my2]=px(0.72,0.5);ctx.strokeStyle='#2a3a60';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(mx1,my1);ctx.lineTo(mx2,my2);ctx.stroke();
+
+  const visN=NEIGHBORHOODS.filter(n=>{if(activeCat==='all')return true;const src=activeCat==='happy'?HAPPY_VENUES:VENUES.filter(v=>v.cat===activeCat);return src.some(v=>v.nid===n.id);});
+  visN.forEach(n=>{
+    const d=n.curve[hour];const[cx,cy]=px(n.cx,n.cy);const r=40+d*0.38;const col=dCol(d);
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    g.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},${0.34+d*0.004})`);
+    g.addColorStop(0.55,`rgba(${col[0]},${col[1]},${col[2]},${0.12+d*0.002})`);
+    g.addColorStop(1,`rgba(${col[0]},${col[1]},${col[2]},0)`);
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  });
+
+  MUNI_STOPS.forEach(s=>{
+    const[cx,cy]=px(s.cx,s.cy);const running=muniRunning(hour,s);
+    const isHov=hoverVenue&&hoverVenue._type==='muni'&&hoverVenue.name===s.name;
+    ctx.beginPath();ctx.arc(cx,cy,isHov?6:4,0,Math.PI*2);ctx.fillStyle=running?'#f97316':'#3a2a1a';ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,isHov?7:5,0,Math.PI*2);ctx.strokeStyle=running?'rgba(249,115,22,0.5)':'rgba(58,42,26,0.3)';ctx.lineWidth=1.5;ctx.stroke();
+    if(running){ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.strokeStyle='rgba(249,115,22,0.18)';ctx.lineWidth=2;ctx.stroke();}
+  });
+
+  getVisibleVenues().forEach(v=>{
+    if(v.cat==='happy')return;
+    const curve=applyModifiers(v,v.curve);const d=curve[hour];const cat=CATEGORIES.find(c=>c.id===v.cat);
+    const[cx,cy]=px(v.cx,v.cy);const isH=hoverVenue===v,isS=selectedVenue===v;const r=isH||isS?7:5;
+    ctx.beginPath();ctx.arc(cx,cy,r+2,0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=cat.color;ctx.fill();
+    if(isH||isS){ctx.beginPath();ctx.arc(cx,cy,r+3,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.5;ctx.stroke();}
+  });
+
+  if(activeCat==='all'||activeCat==='happy'){
+    HAPPY_VENUES.forEach(v=>{
+      const[cx,cy]=px(v.cx,v.cy);const state=happyState(hour,v);const br=happyBr(hour,v);
+      const isH=hoverVenue===v,isS=selectedVenue===v;const active=state!=='off';
+      if(active){ctx.beginPath();ctx.arc(cx,cy,10,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.12*br})`;ctx.fill();ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.22*br})`;ctx.fill();}
+      ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle=active?`rgba(${state==='ending'?'250,204,21':'255,220,50'},${br})`:'rgba(80,60,20,0.7)';
+      ctx.fillText('$',cx,cy);
+      if(isH||isS){ctx.beginPath();ctx.arc(cx,cy,9,0,Math.PI*2);ctx.strokeStyle=active?'rgba(250,204,21,0.8)':'rgba(80,60,20,0.5)';ctx.lineWidth=1.5;ctx.stroke();}
+    });
+  }
+}
+
+function buildChart(v){
+  const wrap=document.getElementById('hour-chart');wrap.innerHTML='';
+  const curve=applyModifiers(v,v.curve);const max=Math.max(...curve,1);
+  curve.forEach((val,i)=>{
+    const bar=document.createElement('div');bar.className='hbar';
+    bar.style.height=Math.max(2,Math.round((val/max)*44))+'px';
+    bar.style.background=i===hour?dHex(val):'rgba(255,255,255,0.12)';
+    bar.style.opacity=i===hour?'1':'0.65';
+    wrap.appendChild(bar);
+  });
+}
+
+function updateVenuePanel(){
+  if(!selectedVenue){
+    document.getElementById('v-name').textContent='Select a venue on the map';
+    document.getElementById('v-meta').textContent='Click any dot or $ to see crowd forecast';
+    ['bar-row','chart-wrap'].forEach(id=>document.getElementById(id).style.display='none');
+    ['boost-note','happy-note','sunset-note'].forEach(id=>document.getElementById(id).style.display='none');
+    buildNpills(null);return;
+  }
+  const v=selectedVenue;
+  if(v._type==='muni'){
+    const running=muniRunning(hour,v);
+    document.getElementById('v-name').textContent=v.name;
+    document.getElementById('v-meta').textContent=`Muni · ${v.line} · ${running?'Currently running':'Not running at this hour'}`;
+    ['bar-row','chart-wrap','boost-note','happy-note','sunset-note'].forEach(id=>document.getElementById(id).style.display='none');
+    buildNpills(null);return;
+  }
+  const curve=applyModifiers(v,v.curve);const d=curve[hour];const cat=CATEGORIES.find(c=>c.id===v.cat);
+  document.getElementById('v-name').textContent=v.name;
+  document.getElementById('v-meta').textContent=`${cat.label} · ${v.addr}`;
+  document.getElementById('bar-row').style.display='flex';
+  document.getElementById('chart-wrap').style.display='block';
+  document.getElementById('bar-fill').style.width=d+'%';document.getElementById('bar-fill').style.background=dHex(d);
+  document.getElementById('bar-pct').textContent=d+'%';
+  buildChart(v);
+  const notes=[];
+  games.filter(g=>v.gameboost&&v.gameboost.includes(g.league)).forEach(g=>notes.push(`+${Math.round(g.boostMagnitude*100)}% game boost · ${g.teams}`));
+  if(weather.isRaining&&v.rainpenalty>0)notes.push(`-${v.rainpenalty}% rain penalty`);
+  const hb=holBoostForCat(v.cat);if(hb>0)notes.push(`+${Math.round(hb*100)}% holiday boost`);
+  const bn=document.getElementById('boost-note');bn.textContent=notes.join(' · ');bn.style.display=notes.length?'block':'none';
+  if(v.cat==='happy'){
+    const state=happyState(hour,v);const hn=document.getElementById('happy-note');
+    hn.textContent=state==='on'?`Happy hour active · ends ${fmt(v.happyEnd)}`:state==='ending'?'Happy hour ending · last call!':hour<v.happyStart?`Happy hour starts at ${fmt(v.happyStart)}`:'Happy hour has ended for today';
+    hn.style.display='block';
+  } else document.getElementById('happy-note').style.display='none';
+  const sn=document.getElementById('sunset-note');
+  if(Math.abs(hour-sunsetHour)<=2){sn.textContent=`Near sunset (${fmt(sunsetHour)}) · evening crowd ramp accelerating`;sn.style.display='block';}
+  else sn.style.display='none';
+  buildNpills(v.nid);
+}
+
+function buildNpills(activeId){
+  const wrap=document.getElementById('npills');wrap.innerHTML='';
+  NEIGHBORHOODS.forEach(n=>{
+    const p=document.createElement('div');p.className='npill'+(n.id===activeId?' active':'');
+    p.textContent=n.name;
+    p.addEventListener('click',()=>{
+      const src=activeCat==='happy'?HAPPY_VENUES:activeCat==='all'?[...VENUES,...HAPPY_VENUES]:VENUES.filter(v=>v.cat===activeCat);
+      const inN=src.filter(v=>v.nid===n.id);if(inN.length){selectedVenue=inN[0];updateVenuePanel();draw();}
+    });
+    wrap.appendChild(p);
+  });
+}
+
+function buildCats(){
+  const row=document.getElementById('cat-row');
+  CATEGORIES.forEach(cat=>{
+    const btn=document.createElement('div');btn.className='cat-btn'+(cat.id===activeCat?' active':'');
+    if(cat.id===activeCat){btn.style.background=cat.color;btn.style.color='#fff';btn.style.borderColor='transparent';}
+    btn.innerHTML=`<span class="dot" style="background:${cat.dot}"></span>${cat.label}`;
+    btn.addEventListener('click',()=>{
+      activeCat=cat.id;selectedVenue=null;
+      document.querySelectorAll('.cat-btn').forEach((b,i)=>{const c=CATEGORIES[i];b.classList.toggle('active',c.id===cat.id);b.style.background=c.id===cat.id?c.color:'';b.style.color=c.id===cat.id?'#fff':'';b.style.borderColor=c.id===cat.id?'transparent':'';});
+      updateVenuePanel();draw();
+    });
+    row.appendChild(btn);
+  });
+}
+
+function hitTest(mx,my){
+  let best=null,bestD=16;
+  MUNI_STOPS.forEach(s=>{const[cx,cy]=px(s.cx,s.cy);const d=Math.hypot(mx-cx,my-cy);if(d<bestD){bestD=d;best={...s,_type:'muni'};}});
+  getVisibleVenues().forEach(v=>{const[cx,cy]=px(v.cx,v.cy);const d=Math.hypot(mx-cx,my-cy);if(d<bestD){bestD=d;best=v;}});
+  return best;
+}
+
+canvas.addEventListener('mousemove',e=>{
+  const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+  const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sx;
+  hoverVenue=hitTest(mx,my);
+  const tip=document.getElementById('tooltip');
+  if(hoverVenue){
+    tip.style.display='block';tip.style.left=(e.clientX-rect.left+12)+'px';tip.style.top=(e.clientY-rect.top-52)+'px';
+    if(hoverVenue._type==='muni'){
+      const running=muniRunning(hour,hoverVenue);
+      tip.innerHTML=`<strong>${hoverVenue.name}</strong><br><span style="font-size:11px;opacity:0.6">Muni ${hoverVenue.line} · <span style="color:${running?'#f97316':'#666'}">${running?'Running':'Not running'}</span></span>`;
+    } else if(hoverVenue.cat==='happy'){
+      const state=happyState(hour,hoverVenue);const curve=applyModifiers(hoverVenue,hoverVenue.curve);const d=curve[hour];
+      const hhTxt=state==='on'?`<span style="color:#facc15">HH active · ends ${fmt(hoverVenue.happyEnd)}</span>`:state==='ending'?`<span style="color:#f97316">HH ending!</span>`:`<span style="opacity:0.4">HH ${hour<hoverVenue.happyStart?'starts '+fmt(hoverVenue.happyStart):'ended'}</span>`;
+      tip.innerHTML=`<strong>${hoverVenue.name}</strong><br><span style="font-size:11px;opacity:0.6">${dLabel(d)} (${d}%)</span><br><span style="font-size:10px">${hhTxt}</span>`;
+    } else {
+      const curve=applyModifiers(hoverVenue,hoverVenue.curve);const d=curve[hour];const cat=CATEGORIES.find(c=>c.id===hoverVenue.cat);
+      tip.innerHTML=`<strong>${hoverVenue.name}</strong><br><span style="font-size:11px;opacity:0.6">${cat.label} · ${dLabel(d)} (${d}%)</span>`;
+    }
+    canvas.style.cursor='pointer';
+  } else {tip.style.display='none';canvas.style.cursor='default';}
+  draw();
+});
+
+canvas.addEventListener('click',e=>{if(hoverVenue){selectedVenue=hoverVenue;updateVenuePanel();draw();}});
+canvas.addEventListener('mouseleave',()=>{hoverVenue=null;document.getElementById('tooltip').style.display='none';draw();});
+document.getElementById('time-range').addEventListener('input',e=>{hour=+e.target.value;document.getElementById('time-display').textContent=fmt(hour);updateVenuePanel();draw();});
+document.getElementById('play-btn').addEventListener('click',()=>{
+  playing=!playing;document.getElementById('play-btn').innerHTML=playing?'&#9646;&#9646;':'&#9654;';
+  if(playing){playInt=setInterval(()=>{hour=(hour+1)%24;document.getElementById('time-range').value=hour;document.getElementById('time-display').textContent=fmt(hour);updateVenuePanel();draw();},550);}
+  else clearInterval(playInt);
+});
+
+// Boot
+buildCats();
+games=mockGames();
+draw();
+document.getElementById('time-display').textContent=fmt(currentHour);
+document.getElementById('date-display').textContent=getDateStr()+' · San Francisco';
+updateWeatherBadge();
+updateModifiers();
+
+Promise.all([fetchSunrise(),fetchGames(),fetchHolidays(),fetchWeather()]).then(()=>{
+  updateWeatherBadge();updateModifiers();updateBanner();draw();
+});
+</script>
+</body>
+</html>
