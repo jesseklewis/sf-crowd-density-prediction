@@ -240,7 +240,8 @@ const CATEGORIES=[
   {id:'irish', label:'Irish bars',         color:'#4ade80',dot:'#16a34a'},
   {id:'dive',  label:'Dive bars',          color:'#a78bfa',dot:'#7c3aed'},
   {id:'cock',  label:'Cocktail lounges',   color:'#f472b6',dot:'#db2777'},
-  {id:'happy', label:'Happy hour bars',    color:'#facc15',dot:'#ca8a04'},
+  {id:'happy', label:'Happy hour',         color:'#facc15',dot:'#ca8a04'},
+  {id:'muni',  label:'Muni stops',         color:'#f97316',dot:'#f97316'},
 ];
 
 const NEIGHBORHOODS=[
@@ -351,7 +352,9 @@ const HOLIDAY_PROFILES={
 
 
 
-let hour=currentHour,activeCat='all',selectedVenue=null,hoverVenue=null,playing=false,playInt=null;
+let hour=currentHour,selectedVenue=null,hoverVenue=null,playing=false,playInt=null;
+// Multi-select category visibility — starts with all on
+const visibleCats=new Set(['pizza','mex','irish','dive','cock','happy','muni']);
 let weather={temp:62,condition:'Partly cloudy',isRaining:false,rainIntensity:0,source:'mock'};
 let games=[],holidays=[],sunsetHour=20,sunriseHour=6;
 let apiStatus={weather:'mock',sports:'loading',holidays:'loading',sunrise:'loading',muni:'mock'};
@@ -561,9 +564,10 @@ function updateBanner(){
 }
 
 function getVisibleVenues(){
-  if(activeCat==='all')return[...VENUES,...HAPPY_VENUES];
-  if(activeCat==='happy')return HAPPY_VENUES;
-  return VENUES.filter(v=>v.cat===activeCat);
+  const out=[];
+  VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
+  if(visibleCats.has('happy'))HAPPY_VENUES.forEach(v=>out.push(v));
+  return out;
 }
 
 // Muni line colors — official SFMTA palette
@@ -632,7 +636,10 @@ function drawMapBase(){
 function draw(){
   drawMapBase();
 
-  const visN=NEIGHBORHOODS.filter(n=>{if(activeCat==='all')return true;const src=activeCat==='happy'?HAPPY_VENUES:VENUES.filter(v=>v.cat===activeCat);return src.some(v=>v.nid===n.id);});
+  const visN=NEIGHBORHOODS.filter(n=>{
+    const venueTypes=[...VENUES,...HAPPY_VENUES];
+    return venueTypes.some(v=>visibleCats.has(v.cat)&&v.nid===n.id);
+  });
   visN.forEach(n=>{
     const raw=n.curve[hour];
     const d=modToggles.sunset?Math.min(99,Math.round(raw*sunsetMult(hour,n.id))):raw;
@@ -644,16 +651,18 @@ function draw(){
     ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
   });
 
-  MUNI_STOPS.forEach(s=>{
-    const[cx,cy]=px(s.cx,s.cy);const running=muniRunning(hour,s);
-    const isHov=hoverVenue&&hoverVenue._type==='muni'&&hoverVenue.name===s.name;
-    ctx.beginPath();ctx.arc(cx,cy,isHov?6:4,0,Math.PI*2);ctx.fillStyle=running?'#f97316':'#3a2a1a';ctx.fill();
-    ctx.beginPath();ctx.arc(cx,cy,isHov?7:5,0,Math.PI*2);ctx.strokeStyle=running?'rgba(249,115,22,0.5)':'rgba(58,42,26,0.3)';ctx.lineWidth=1.5;ctx.stroke();
-    if(running){ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.strokeStyle='rgba(249,115,22,0.18)';ctx.lineWidth=2;ctx.stroke();}
-  });
+  if(visibleCats.has('muni')){
+    MUNI_STOPS.forEach(s=>{
+      const[cx,cy]=px(s.cx,s.cy);const running=muniRunning(hour,s);
+      const isHov=hoverVenue&&hoverVenue._type==='muni'&&hoverVenue.name===s.name;
+      ctx.beginPath();ctx.arc(cx,cy,isHov?6:4,0,Math.PI*2);ctx.fillStyle=running?'#f97316':'#3a2a1a';ctx.fill();
+      ctx.beginPath();ctx.arc(cx,cy,isHov?7:5,0,Math.PI*2);ctx.strokeStyle=running?'rgba(249,115,22,0.5)':'rgba(58,42,26,0.3)';ctx.lineWidth=1.5;ctx.stroke();
+      if(running){ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.strokeStyle='rgba(249,115,22,0.18)';ctx.lineWidth=2;ctx.stroke();}
+    });
+  }
 
   getVisibleVenues().forEach(v=>{
-    if(v.cat==='happy')return;
+    if(v.cat==='happy')return; // drawn separately as $ symbols below
     const curve=applyModifiers(v,v.curve);const d=curve[hour];const cat=CATEGORIES.find(c=>c.id===v.cat);
     const[cx,cy]=px(v.cx,v.cy);const isH=hoverVenue===v,isS=selectedVenue===v;const r=isH||isS?7:5;
     ctx.beginPath();ctx.arc(cx,cy,r+2,0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fill();
@@ -661,7 +670,7 @@ function draw(){
     if(isH||isS){ctx.beginPath();ctx.arc(cx,cy,r+3,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.5;ctx.stroke();}
   });
 
-  if(activeCat==='all'||activeCat==='happy'){
+  if(visibleCats.has('happy')){
     HAPPY_VENUES.forEach(v=>{
       const[cx,cy]=px(v.cx,v.cy);const state=happyState(hour,v);const br=happyBr(hour,v);
       const isH=hoverVenue===v,isS=selectedVenue===v;const active=state!=='off';
@@ -732,22 +741,45 @@ function buildNpills(activeId){
     const p=document.createElement('div');p.className='npill'+(n.id===activeId?' active':'');
     p.textContent=n.name;
     p.addEventListener('click',()=>{
-      const src=activeCat==='happy'?HAPPY_VENUES:activeCat==='all'?[...VENUES,...HAPPY_VENUES]:VENUES.filter(v=>v.cat===activeCat);
+      const src=[...VENUES.filter(v=>visibleCats.has(v.cat)),...(visibleCats.has('happy')?HAPPY_VENUES:[])];
       const inN=src.filter(v=>v.nid===n.id);if(inN.length){selectedVenue=inN[0];updateVenuePanel();draw();}
     });
     wrap.appendChild(p);
   });
 }
 
+function isCatActive(id){
+  if(id==='all') return visibleCats.size===CATEGORIES.filter(c=>c.id!=='all').length;
+  return visibleCats.has(id);
+}
+
+function applyCatStyle(btn,cat){
+  const on=isCatActive(cat.id);
+  btn.style.background=on?cat.color:'';
+  btn.style.color=on?'#fff':'';
+  btn.style.borderColor=on?'transparent':'';
+  btn.style.opacity=on?'1':'0.5';
+  btn.classList.toggle('active',on);
+}
+
 function buildCats(){
   const row=document.getElementById('cat-row');
   CATEGORIES.forEach(cat=>{
-    const btn=document.createElement('div');btn.className='cat-btn'+(cat.id===activeCat?' active':'');
-    if(cat.id===activeCat){btn.style.background=cat.color;btn.style.color='#fff';btn.style.borderColor='transparent';}
+    const btn=document.createElement('div');btn.className='cat-btn';
     btn.innerHTML=`<span class="dot" style="background:${cat.dot}"></span>${cat.label}`;
+    applyCatStyle(btn,cat);
     btn.addEventListener('click',()=>{
-      activeCat=cat.id;selectedVenue=null;
-      document.querySelectorAll('.cat-btn').forEach((b,i)=>{const c=CATEGORIES[i];b.classList.toggle('active',c.id===cat.id);b.style.background=c.id===cat.id?c.color:'';b.style.color=c.id===cat.id?'#fff':'';b.style.borderColor=c.id===cat.id?'transparent':'';});
+      if(cat.id==='all'){
+        const allOn=isCatActive('all');
+        const nonAll=CATEGORIES.filter(c=>c.id!=='all');
+        if(allOn){nonAll.forEach(c=>visibleCats.delete(c.id));}
+        else{nonAll.forEach(c=>visibleCats.add(c.id));}
+      } else {
+        if(visibleCats.has(cat.id))visibleCats.delete(cat.id);
+        else visibleCats.add(cat.id);
+      }
+      selectedVenue=null;
+      document.querySelectorAll('.cat-btn').forEach((b,i)=>applyCatStyle(b,CATEGORIES[i]));
       updateVenuePanel();draw();
     });
     row.appendChild(btn);
@@ -756,7 +788,7 @@ function buildCats(){
 
 function hitTest(mx,my){
   let best=null,bestD=16;
-  MUNI_STOPS.forEach(s=>{const[cx,cy]=px(s.cx,s.cy);const d=Math.hypot(mx-cx,my-cy);if(d<bestD){bestD=d;best={...s,_type:'muni'};}});
+  if(visibleCats.has('muni'))MUNI_STOPS.forEach(s=>{const[cx,cy]=px(s.cx,s.cy);const d=Math.hypot(mx-cx,my-cy);if(d<bestD){bestD=d;best={...s,_type:'muni'};}});
   getVisibleVenues().forEach(v=>{const[cx,cy]=px(v.cx,v.cy);const d=Math.hypot(mx-cx,my-cy);if(d<bestD){bestD=d;best=v;}});
   return best;
 }
