@@ -55,15 +55,20 @@
     #map-row { display: flex; align-items: stretch; gap: 0; margin-bottom: 0; }
     #canvas-wrap { flex: 1; min-width: 0; border-radius: var(--radius-lg) 0 0 0; }
     /* Vertical zoom bar */
-    #zoom-bar { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; background: rgba(20,26,42,0.96); border-radius: 0 var(--radius-lg) 0 0; border-left: 1px solid rgba(255,255,255,0.15); width: 42px; flex-shrink: 0; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    #zoom-bar { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; background: rgba(20,26,42,0.96); border-radius: 0 var(--radius-lg) 0 0; border-left: 1px solid rgba(255,255,255,0.15); width: 46px; flex-shrink: 0; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
     #zoom-bar button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.90); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; line-height: 1; user-select: none; transition: background 0.12s; }
     #zoom-bar button:hover { background: rgba(255,255,255,0.18); }
     #zoom-bar button:active { background: rgba(255,255,255,0.28); }
     #zoom-reset { font-size: 12px !important; color: rgba(255,255,255,0.55) !important; border-color: rgba(255,255,255,0.12) !important; background: rgba(255,255,255,0.06) !important; }
     #zoom-range { writing-mode: vertical-lr; direction: rtl; flex: 1; accent-color: #60a5fa; width: 4px; min-height: 80px; cursor: pointer; touch-action: none; appearance: slider-vertical; -webkit-appearance: slider-vertical; opacity: 1; }
     #zoom-label { font-size: 9px; color: rgba(255,255,255,0.65); font-variant-numeric: tabular-nums; writing-mode: horizontal-tb; text-align: center; font-weight: 500; }
+    #dpad { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 2px; }
+    #dpad-row { display: flex; gap: 2px; }
+    .dpad-btn { width: 24px; height: 24px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.80); font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; line-height: 1; transition: background 0.1s; }
+    .dpad-btn:hover { background: rgba(255,255,255,0.18); }
+    .dpad-btn:active { background: rgba(255,255,255,0.30); }
     #pinch-hint { position: absolute; top: 50%; left: 45%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.75); color: #fff; font-size: 13px; padding: 10px 18px; border-radius: 99px; pointer-events: none; opacity: 0; transition: opacity 0.3s; white-space: nowrap; z-index: 20; }
-    .time-section { background: var(--color-surface); border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 10px 14px 12px; margin-bottom: 12px; margin-right: 42px; }
+    .time-section { background: var(--color-surface); border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 10px 14px 12px; margin-bottom: 12px; margin-right: 46px; }
     .time-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
     .time-display-inline { font-size: 15px; font-weight: 500; color: var(--color-text); }
     .time-date-inline { font-size: 10px; color: var(--color-text3); }
@@ -168,6 +173,14 @@
       <button id="zoom-out" aria-label="Zoom out">−</button>
       <span id="zoom-label">1×</span>
       <button id="zoom-reset" aria-label="Reset" title="Reset zoom">⊙</button>
+      <div id="dpad">
+        <button class="dpad-btn" id="pan-up"   aria-label="Pan up">▲</button>
+        <div id="dpad-row">
+          <button class="dpad-btn" id="pan-left"  aria-label="Pan left">◀</button>
+          <button class="dpad-btn" id="pan-right" aria-label="Pan right">▶</button>
+        </div>
+        <button class="dpad-btn" id="pan-down"  aria-label="Pan down">▼</button>
+      </div>
     </div>
   </div>
 
@@ -305,9 +318,9 @@ const NEIGHBORHOODS=[
   // Marina / Crissy Field — also a sunset spot
   {id:'marina',   name:'Marina',     cx:0.38,cy:0.19,curve:[3,2,2,2,2,3,5,8,14,18,22,26,28,30,32,36,40,50,65,72,60,42,22,8]},
   // Inner Richmond
-  {id:'richmond', name:'Richmond',   cx:0.222,cy:0.326,curve:[2,2,2,2,2,2,3,5,8,12,18,24,28,32,35,38,40,45,52,58,60,52,38,18]},
+  {id:'richmond', name:'Richmond',   cx:0.222,cy:0.326,curve:[3,2,2,2,2,3,5,8,12,18,28,40,55,65,68,65,60,62,68,72,70,60,42,18]},
   // Outer Sunset
-  {id:'sunset',   name:'Sunset',     cx:0.196,cy:0.588,curve:[2,1,1,1,1,2,3,5,8,12,16,20,24,28,32,36,38,42,48,52,50,42,28,12]},
+  {id:'sunset',   name:'Sunset',     cx:0.196,cy:0.588,curve:[2,1,1,1,1,2,3,6,12,22,35,48,58,65,65,62,60,65,75,82,72,55,32,12]},
   // Marina / Cow Hollow
   {id:'marina',   name:'Marina',     cx:0.378,cy:0.205,curve:[3,2,2,2,2,3,5,8,14,18,22,26,28,32,35,40,45,52,62,70,65,52,30,12]},
   // Nob Hill
@@ -792,6 +805,143 @@ const ALL_VENUES = [
   V("Greens Restaurant",   'rest','marina',0.354,0.200,"2 Marina Blvd · Vegetarian fine dining",[],0,     DINE),
 ];
 
+
+// ════════════════════════════════════════════════════════════════════════════
+// EXPANDED VENUE DATABASE — Sunset, Richmond, Inner Sunset + more
+// ════════════════════════════════════════════════════════════════════════════
+const EXTRA_VENUES = [
+
+  // ── OUTER SUNSET — Irving, Judah, Noriega, Taraval ──────────────────────
+  // Irving Street corridor
+  V("Hook Fish Co.",       'rest','sunset', 0.196,0.552,"4542 Irving · Sustainably-sourced fish",[],10,       [...D,0,0,5,15,28,42,52,55,52,55,65,72,78,72,55,28]),
+  V("Palm City",           'rest','sunset', 0.200,0.548,"4055 Irving · Neighborhood bistro",[],0,             DINE),
+  V("Manna Korean BBQ",    'rest','sunset', 0.198,0.550,"845 Irving · Homestyle Korean",[],0,                 DINE),
+  V("New Eritrea",         'rest','sunset', 0.196,0.548,"907 Irving · Eritrean/Ethiopian staple",[],0,        DINE),
+  V("Thanh Long",          'rest','sunset', 0.192,0.558,"4101 Judah · First Vietnamese in SF",[],0,           DINE),
+  V("Yellow Submarine",    'rest','sunset', 0.224,0.548,"545 Irving · Sandwiches since 1971",[],0,            LNCH),
+  V("Gaspare's Pizza",     'pizza','sunset',0.202,0.552,"5546 Geary · Old-school pizza",[],0,                DINE),
+  V("Brothers Pizza",      'pizza','sunset',0.186,0.560,"3925 Noriega · Indian pizza specialty",[],0,         DINE),
+  V("Caché",               'rest','sunset', 0.218,0.548,"Inner Sunset · French seafood bistro",[],0,          DINE),
+  V("DamnFine",            'bar','sunset',  0.178,0.580,"3410 Judah · Wood-fired pizza & cocktails",[],5,     ALL),
+  V("Sunset Cantina",      'bar','sunset',  0.180,0.582,"3414 Judah · Mexican, back patio, sports",['nfl'],5, ALL),
+  V("Celia's by the Beach",'mex','sunset',  0.192,0.572,"4019 Judah · Enchiladas & margaritas",[],0,          ALL),
+  V("Two Pitchers Taproom",'bar','sunset',  0.196,0.558,"Outer Sunset · Craft beer & smashburgers",[],10,     ALL),
+  // Judah/Great Highway
+  V("Outerlands",          'rest','sunset', 0.190,0.562,"4001 Judah · Dutch baby & local sourcing",[],0,      BRUNCH),
+  V("Judahlicious",        'rest','sunset', 0.192,0.565,"3906 Judah · Açaí bowls & vegan",[],0,              LNCH),
+  V("The Pizza Place",     'pizza','sunset',0.196,0.575,"3901 Noriega · Build-your-own pie",[],0,             DINE),
+  V("Java Beach Café",     'rest','sunset', 0.165,0.568,"1396 La Playa · Beach café, brunch",[],0,            BRUNCH),
+  V("The Riptide",         'dive','sunset', 0.170,0.588,"3639 Taraval · Dive since 1939, karaoke",[],15,      BAR),
+  V("Andytown Coffee",     'rest','sunset', 0.194,0.562,"4045 Judah · Craft coffee, ocean views",[],0,        CAFE),
+  V("Devil's Teeth Baking",'rest','sunset', 0.185,0.560,"3876 Noriega · Beloved bakery & brunch",[],0,        BRUNCH),
+  V("Park Chalet",         'bar','sunset',  0.160,0.570,"1000 Great Hwy · Beer garden, ocean views",[],20,    [...D,0,0,5,12,22,35,45,52,55,55,55,55,58,62,62,58,48,35,20]),
+  V("Beach Chalet Brewery",'bar','sunset',  0.162,0.570,"1000 Great Hwy · Brewpub, bay views",[],15,         [...D,0,0,5,12,22,35,45,52,55,55,55,55,58,62,62,58,48,35,20]),
+  V("White Cap Bar",       'bar','sunset',  0.186,0.562,"Near Noriega · Rum cocktails near beach",[],15,      BAR),
+  V("Taraval Garage",      'dive','sunset', 0.178,0.592,"Taraval · Neighborhood dive",[],0,                   BAR),
+  V("Fog City Diner (Sunset)",'rest','sunset',0.196,0.570,"Outer Sunset · Classic diner",[],0,                ALL),
+
+  // ── INNER SUNSET — 9th Ave & Irving, Cole Valley ────────────────────────
+  V("Hollow Coffee",       'rest','sunset', 0.252,0.522,"1301 9th Ave · Instagrammable coffee",[],0,          CAFE),
+  V("Tartine Manufactory (Sunset)",'rest','sunset',0.250,0.524,"595 Judah · Iconic bread & pastries",[],0,   BRUNCH),
+  V("Gialina (Sunset)",    'pizza','sunset',0.255,0.518,"2842 Diamond · Artisan pizza",[],0,                  DINE),
+  V("Bearbelly",           'rest','sunset', 0.248,0.520,"9th Ave · Asian-inspired pastries",[],0,             BRUNCH),
+  V("Pluto's Fresh Food",  'rest','sunset', 0.255,0.515,"627 Irving · Fresh salads & bowls",[],0,             LNCH),
+  V("Park Burger",         'rest','sunset', 0.252,0.518,"1234 9th Ave · Grass-fed burgers",[],0,              LNCH),
+  V("Marnee Thai",         'rest','sunset', 0.250,0.520,"2225 Irving · Beloved Thai",[],0,                    DINE),
+  V("Ebisu Japanese",      'rest','sunset', 0.254,0.516,"1283 9th Ave · Sushi & izakaya",[],0,                DINE),
+  V("Irving Pizza",        'pizza','sunset',0.256,0.514,"Irving St · Late-night slices",[],0,                 [...D,0,8,18,28,38,42,40,38,42,52,62,68,65,48,25]),
+  V("Arizmendi Bakery",    'rest','sunset', 0.255,0.518,"1331 9th Ave · Worker-owned, seasonal pizza",[],0,  LNCH),
+  V("Pagan Bar (Sunset)",  'bar','sunset',  0.252,0.516,"Judah St · Neighborhood bar",[],0,                   BAR),
+  V("The Philosopher's Club",'dive','sunset',0.248,0.520,"824 Ulloa · Neighborhood dive",[],0,                BAR),
+  V("Yancy's Saloon",      'dive','sunset', 0.254,0.514,"734 Irving · Sports bar, local fave",['nfl','mlb'],0, ALL),
+
+  // ── INNER RICHMOND — Clement, Geary, Balboa ──────────────────────────────
+  // Clement Street
+  V("Burma Superstar",     'rest','richmond',0.228,0.320,"309 Clement · World-famous Burmese",[],0,           DINE),
+  V("B Star (Burma Superstar)",'rest','richmond',0.226,0.318,"127 Clement · Burma Superstar spin-off",[],0,   DINE),
+  V("Hong Kong Lounge",    'rest','richmond',0.224,0.322,"5322 Geary · Classic dim sum",[],0,                 LNCH),
+  V("Dragon Beaux",        'rest','richmond',0.220,0.328,"5700 Geary · Upscale dim sum",[],0,                 LNCH),
+  V("Chapeau!",            'rest','richmond',0.224,0.316,"126 Clement · French bistro since 1996",[],0,       DINE),
+  V("Pearl 6101",          'bar','richmond', 0.218,0.318,"6101 California · Med bar & restaurant",[],0,       DINE),
+  V("Kitchen Istanbul",    'rest','richmond',0.226,0.316,"4031 Clement · Turkish, SF Chronicle Top 100",[],0, DINE),
+  V("Eats",                'rest','richmond',0.228,0.314,"50 Clement · Wildly popular brunch",[],0,           BRUNCH),
+  V("Good Luck Dim Sum",   'rest','richmond',0.224,0.318,"736 Clement · Walk-up counter dim sum",[],0,        [...D,8,18,45,65,75,78,72,65,55,45,35,25,15,5,0]),
+  V("Arsicault Bakery",    'rest','richmond',0.222,0.320,"397 Arguello · Best croissant in America",[],0,     CAFE),
+  V("My Tofu House",       'rest','richmond',0.226,0.316,"4627 Geary · Korean tofu BYOB",[],0,                DINE),
+  V("Wako Japanese",       'rest','richmond',0.224,0.318,"211 Clement · Omakase sushi",[],0,                  DINE),
+  V("Mandalay",            'rest','richmond',0.226,0.314,"4348 California · Burmese since 1984",[],0,         DINE),
+  V("Noodle in a Haystack",'rest','richmond',0.222,0.320,"3226 Geary · Japanese tasting menu 12 seats",[],0, [...D,0,0,0,0,0,0,0,0,0,0,0,38,55,65,72,78,82,78,65,48,28,12]),
+  V("Chili House",         'rest','richmond',0.226,0.316,"780 Clement · Sichuan specialties",[],0,            DINE),
+  V("Tommy's Mexican Restaurant",'mex','richmond',0.215,0.330,"5929 Geary · 300+ tequilas & mezcals",[],0,   [...D,0,0,0,12,28,42,55,62,60,55,50,55,62,68,70,65,50]),
+  V("Breadbelly",          'rest','richmond',0.222,0.324,"1972 Irving · Japanese-inspired pastries",[],0,     BRUNCH),
+  V("Lokma",               'rest','richmond',0.218,0.322,"395 Arguello · Turkish & Mediterranean",[],0,       DINE),
+  V("Caffe Trieste (Richmond)",'rest','richmond',0.224,0.316,"Clement St · Coffee institution",[],0,          CAFE),
+  V("Hard Knox Cafe",      'rest','richmond',0.226,0.318,"2526 Geary · Southern soul food, fried chicken",[],0,LNCH),
+  // Richmond bars
+  V("The Plough & Stars",  'irish','richmond',0.226,0.314,"116 Clement · Irish, live Celtic music",['nfl'],0, BAR),
+  V("Ireland's 32",        'irish','richmond',0.220,0.320,"3920 Geary · Cash-only classic",['nfl'],0,         BAR),
+  V("540 Club (Richmond)", 'dive','richmond', 0.228,0.318,"540 Clement · Vintage dive, arcade",[],0,          BAR),
+  V("Trad'r Sam",          'bar','richmond',  0.215,0.318,"6150 Geary · Classic tiki bar, scorpion bowls",[],0,BAR),
+  V("The Bitter End",      'dive','richmond', 0.228,0.316,"441 Clement · USF crowd, neighborhood dive",[],0,  BAR),
+  V("Richmond Republic Draught House",'bar','richmond',0.226,0.314,"642 Clement · Beers on tap, comfort food",[],0,ALL),
+  V("The Abbey Tavern",    'irish','richmond',0.222,0.320,"4212 Geary · Irish pub",['nfl'],0,                 BAR),
+  V("The Temple Bar",      'bar','richmond',  0.224,0.318,"Clement St · Neighborhood bar",[],0,               BAR),
+  V("High Treason",        'bar','richmond',  0.226,0.316,"589 Clement · Cocktail bar",[],0,                  BAR),
+  V("Blue Danube",         'bar','richmond',  0.228,0.314,"306 Clement · Cozy coffeehouse & bar",[],0,        ALL),
+  V("Horsefeather",        'bar','richmond',  0.225,0.316,"528 Divisadero · Serious cocktails",[],0,          BAR),
+  V("The Hearth",          'bar','richmond',  0.224,0.318,"Clement St · Bar & gastropub",[],0,                ALL),
+  V("Happy Lounge",        'dive','richmond', 0.222,0.322,"Geary St · Dive bar",[],0,                        BAR),
+  // Outer Richmond / Balboa
+  V("Park Chalet (Richmond)",'bar','richmond',0.162,0.562,"1000 Great Hwy · Oceanview brewery",[],15,         ALL),
+  V("Fiorella Clement",    'rest','richmond', 0.226,0.316,"2339 Clement · Beloved Italian",[],0,              DINE),
+  V("Cinderella Russian Bakery",'rest','richmond',0.218,0.322,"436 Balboa · Russian heritage baked goods",[],0,CAFE),
+  V("Pizzetta 211",        'pizza','richmond',0.222,0.326,"211 23rd Ave · Tiny seasonal pies",[],0,            DINE),
+  V("Bill's Place",        'rest','richmond', 0.224,0.318,"2315 Clement · Diner since 1959",[],0,             LNCH),
+
+  // ── POTRERO HILL / BERNAL HEIGHTS ────────────────────────────────────────
+  V("Anchor Public Taps",  'bar','dog',     0.568,0.622,"495 De Haro · Anchor taproom",[],10,                 ALL),
+  V("Connecticut Yankee",  'bar','dog',     0.565,0.630,"100 Connecticut · Sports bar Potrero",['nfl','mlb'],5,ALL),
+  V("Chez Maman",          'rest','dog',    0.568,0.628,"1453 18th St · French bistro Potrero",[],0,          DINE),
+  V("Goat Hill Pizza",     'pizza','dog',   0.568,0.630,"300 Connecticut · Monday all-you-can-eat",[],0,      DINE),
+  V("Chez Papa Resto",     'rest','dog',    0.566,0.628,"4 Mint Plaza · French brasserie",[],0,               DINE),
+  V("Bernal Star",         'bar','dog',     0.498,0.692,"Cortland Ave · Bernal Heights bar",[],0,             BAR),
+  V("Wild Side West",      'dive','dog',    0.495,0.698,"424 Cortland · Lesbian dive, garden",[],15,          BAR),
+  V("The Precita Park Café",'rest','dog',   0.492,0.695,"Precita Ave · Neighborhood café",[],0,               CAFE),
+  V("Nido's Backyard",     'mex','dog',     0.495,0.690,"Cortland Ave · Mexican backyard bar",[],10,           ALL),
+
+  // ── OUTER MISSION / EXCELSIOR ────────────────────────────────────────────
+  V("Broken Record",       'bar','dog',     0.450,0.778,"1166 Geneva · Dive + wood-fired pizza",[],0,         BAR),
+  V("El Toreador",         'mex','dog',     0.448,0.772,"2088 Mission · Mission burrito",[],0,                LNCH),
+
+  // ── HAYES VALLEY / CIVIC CENTER ──────────────────────────────────────────
+  V("Sightglass Coffee",   'rest','soma',   0.502,0.482,"270 7th St · Third-wave coffee roaster",[],0,        CAFE),
+  V("Absinthe Brasserie",  'bar','tender',  0.486,0.462,"398 Hayes · French brasserie & cocktails",[],0,      DINE),
+  V("Riddler Wine Bar",    'bar','tender',  0.484,0.460,"528 Laguna · Champagne & wine bar",[],0,             BAR),
+  V("Rich Table",          'bar','tender',  0.484,0.462,"199 Gough · Michelin creative cuisine",[],0,         DINE),
+  V("Dosa (Hayes)",        'rest','tender', 0.486,0.464,"995 Valencia · South Indian",[],0,                   DINE),
+  V("Monsieur Benjamin",   'rest','tender', 0.486,0.462,"451 Gough · French bistro",[],0,                     DINE),
+  V("Zuni Café",           'rest','tender', 0.498,0.468,"1658 Market · SF institution",[],0,                  DINE),
+  V("Bar Crudo",           'bar','tender',  0.484,0.462,"655 Divisadero · Raw bar & oysters",[],0,            DINE),
+  V("Thistle Dew",         'dive','tender', 0.492,0.468,"Haight St · Neighborhood dive",[],0,                 BAR),
+  V("Taqueria Cancun (Hayes)",'mex','tender',0.486,0.460,"2228 Mission · Mexican counter",[],0,               LNCH),
+
+  // ── MISSION BAY / CHINA BASIN ────────────────────────────────────────────
+  V("Cavaña",              'bar','soma',    0.650,0.580,"Latin rooftop bar, Mission Bay",[],0,                 BAR),
+  V("GluGlu Wine Bar",     'bar','dog',     0.638,0.692,"7 Warriors Way · Wine bar Thrive City",[],0,         ALL),
+  V("Via Aurelia",         'bar','dog',     0.640,0.688,"Mission Bay · Italian near Chase Center",[],0,       ALL),
+  V("Fieldwork Brewing",   'bar','dog',     0.638,0.690,"Mission Bay · Craft beer taproom",[],0,              ALL),
+
+  // ── RUSSIAN HILL / COW HOLLOW ────────────────────────────────────────────
+  V("Zarzuela",            'rest','nob',    0.505,0.345,"2000 Hyde · Spanish tapas",[],0,                     DINE),
+  V("Frascati",            'rest','nob',    0.505,0.348,"1901 Hyde · Mediterranean neighborhood gem",[],0,    DINE),
+  V("La Folie",            'rest','nob',    0.504,0.350,"2316 Polk · French fine dining",[],0,                DINE),
+  V("Nick's Crispy Tacos", 'mex','nob',     0.502,0.352,"1500 Broadway · Crispy fish tacos",[],0,             LNCH),
+  V("The Buena Vista (Ghirardelli)",'bar','nb',0.605,0.238,"2765 Hyde · Irish coffees since 1952",[],0,       ALL),
+  V("Swensen's Ice Cream", 'rest','nob',    0.506,0.354,"1999 Hyde · SF original since 1948",[],0,            [...D,8,18,38,55,65,68,62,55,48,42,38,35,30,22,12]),
+  V("Pesce",               'rest','nob',    0.504,0.350,"2223 Market · Italian seafood",[],0,                  DINE),
+  V("The Interval (Fort Mason)",'bar','marina',0.358,0.200,"2 Marina · Cocktail bar at end of time",[],0,     BAR),
+];
+
 const HAPPY_VENUES=[
   {name:"The Buena Vista",    cat:'happy',nid:'nb',     cx:0.600,cy:0.285,addr:"North Beach · Famous Irish coffees",     happyStart:4, happyEnd:7, gameboost:[],         rainpenalty:0,  curve:[5,4,3,3,4,5,6,8,12,16,22,28,32,36,38,42,44,48,55,60,58,50,38,18]},
   {name:"Vesuvio Cafe",       cat:'happy',nid:'nb',     cx:0.555,cy:0.295,addr:"North Beach · Beat Generation landmark", happyStart:16,happyEnd:19,gameboost:[],         rainpenalty:0,  curve:[4,3,3,3,3,4,5,7,10,14,20,28,36,42,46,52,58,62,68,72,65,52,35,18]},
@@ -823,7 +973,7 @@ const visibleCats=new Set(['bar','rest','pizza','mex','irish','dive','happy','mu
 // Zoom/pan state
 let zoom=1, panX=0, panY=0;
 let isPanning=false, lastPanX=0, lastPanY=0, pinchDist0=0;
-const MIN_ZOOM=1, MAX_ZOOM=20;
+const MIN_ZOOM=1, MAX_ZOOM=50;
 function wpx(rx,ry){ return [(rx*W+panX)*zoom, (ry*H+panY)*zoom]; }
 function screenToMap(sx,sy){ return [(sx/zoom-panX)/W, (sy/zoom-panY)/H]; }
 function clampPan(){
@@ -1189,6 +1339,7 @@ function getVisibleVenues(){
   VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
   NB_VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
   ALL_VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
+  EXTRA_VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
   if(visibleCats.has('happy'))HAPPY_VENUES.forEach(v=>out.push(v));
   return out;
 }
@@ -1868,6 +2019,37 @@ document.getElementById('zoom-range').addEventListener('input',e=>{
 document.getElementById('zoom-in').addEventListener('click',()=>applyZoom(zoom*1.6,W/2,H/2));
 document.getElementById('zoom-out').addEventListener('click',()=>applyZoom(zoom/1.6,W/2,H/2));
 document.getElementById('zoom-reset').addEventListener('click',resetZoom);
+
+// D-pad pan — step size scales with zoom so it feels consistent on screen
+function panStep(dx, dy){
+  if(zoom<=1)return;
+  const step=80/zoom; // ~80px on screen per press
+  panX+=dx*step;panY+=dy*step;clampPan();syncZoomUI();draw();
+}
+// Continuous pan on hold
+function makePanBtn(id,dx,dy){
+  const btn=document.getElementById(id);
+  if(!btn)return;
+  let interval=null;
+  const start=()=>{panStep(dx,dy);interval=setInterval(()=>panStep(dx,dy),100);};
+  const stop=()=>clearInterval(interval);
+  btn.addEventListener('mousedown',start);
+  btn.addEventListener('touchstart',e=>{e.preventDefault();start();},{passive:false});
+  window.addEventListener('mouseup',stop);
+  btn.addEventListener('touchend',stop,{passive:true});
+}
+makePanBtn('pan-up',0,1);
+makePanBtn('pan-down',0,-1);
+makePanBtn('pan-left',1,0);
+makePanBtn('pan-right',-1,0);
+
+// Also support arrow keys for desktop
+window.addEventListener('keydown',e=>{
+  const t=e.target.tagName;
+  if(t==='INPUT'||t==='BUTTON'||zoom<=1)return;
+  const map={ArrowUp:[0,1],ArrowDown:[0,-1],ArrowLeft:[1,0],ArrowRight:[-1,0]};
+  if(map[e.key]){e.preventDefault();panStep(...map[e.key]);}
+});
 function getPageBg(min) {
   // Subtle page bg shift matching muted sky tones
   if(min<360||min>1320) return '#060810';   // night
