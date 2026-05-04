@@ -269,13 +269,17 @@ const CATEGORIES=[
   {id:'cock',  label:'Cocktail lounges',   color:'#f472b6',dot:'#db2777'},
   {id:'happy', label:'Happy hour',         color:'#facc15',dot:'#ca8a04'},
   {id:'muni',  label:'Muni stops',         color:'#f97316',dot:'#f97316'},
+  {id:'nb_ital',label:'Italian',             color:'#e8a838',dot:'#e8a838'},
+  {id:'nb_bar', label:'NB bars',             color:'#60a5fa',dot:'#3b82f6'},
+  {id:'nb_cafe',label:'Cafes & bakeries',    color:'#c084fc',dot:'#a855f7'},
+  {id:'nb_sea', label:'Seafood',             color:'#34d399',dot:'#10b981'},
 ];
 
 const NEIGHBORHOODS=[
   {id:'mission',name:'The Mission',cx:0.42,cy:0.60,curve:[5,4,3,3,3,4,5,6,8,10,12,14,16,18,22,26,32,42,58,70,80,85,75,55]},
   {id:'castro', name:'Castro',     cx:0.36,cy:0.57,curve:[4,3,3,3,3,4,5,6,8,10,11,13,15,18,22,26,30,38,52,65,78,82,70,48]},
   {id:'soma',   name:'SoMa',       cx:0.52,cy:0.52,curve:[8,6,5,4,4,5,12,22,55,72,75,70,65,60,58,55,50,58,70,72,65,55,40,20]},
-  {id:'nb',     name:'North Beach',cx:0.54,cy:0.32,curve:[6,5,4,4,4,5,7,9,15,20,28,35,40,45,48,50,52,58,72,80,75,65,45,25]},
+  {id:'nb',     name:'North Beach',cx:0.556,cy:0.280,curve:[6,5,4,4,4,5,8,12,20,35,52,65,68,70,68,65,62,65,75,85,88,82,68,42]},
   {id:'haight', name:'Haight',     cx:0.32,cy:0.52,curve:[4,3,3,3,3,4,5,7,10,14,20,28,36,42,46,48,44,42,48,52,55,45,30,15]},
   {id:'fidi',   name:'FiDi',       cx:0.53,cy:0.42,curve:[3,2,2,2,2,3,8,30,72,85,88,80,55,45,30,22,15,12,10,8,6,5,4,3]},
   {id:'tender', name:'Tenderloin', cx:0.50,cy:0.46,curve:[15,14,13,12,12,14,18,22,30,38,42,45,45,44,42,40,38,40,45,48,50,45,35,22]},
@@ -400,6 +404,79 @@ const VENUES=[
   V("Horsefeather",        'cock','richmond',0.225,0.318,"Inner Richmond · Serious cocktails",[],0,          [...EC,0,0,5,12,20,30,40,48,52,55,62,65,58,38,15,5]),
 ];
 
+
+// ── NORTH BEACH — FULL NEIGHBORHOOD BUILD-OUT ────────────────────────────────
+// Night curve shorthand helpers
+const NB_LUNCH   = [0,0,0,0,0,0,0,8,20,45,68,75,72,65,55,45,35,38,52,65,72,70,55,20]; // lunch-heavy
+const NB_DINNER  = [0,0,0,0,0,0,0,0,5,12,22,38,55,68,72,70,65,60,68,75,78,72,55,25]; // dinner-focused
+const NB_LATE    = [5,4,3,3,3,4,5,6,8,10,14,18,22,28,32,36,40,52,70,82,88,85,72,45]; // late night peak
+const NB_BAR     = [3,2,2,2,2,3,4,5,6,8,12,18,24,30,36,42,48,58,72,82,88,85,70,42]; // bar hours
+const NB_CAFE    = [3,2,2,2,2,5,18,45,65,72,68,62,55,48,42,38,32,25,18,12,8,5,3,2];  // cafe/morning
+const NB_ALLDAY  = [3,2,2,2,2,3,5,12,28,45,58,65,68,70,68,65,62,65,72,78,75,65,48,22]; // all day
+
+const NB_VENUES = [
+  // ── BARS ──────────────────────────────────────────────────────────────────
+  // Columbus Ave corridor
+  V("Vesuvio Cafe",         'nb_bar','nb', 0.558,0.268,"242 Columbus · Beat Generation landmark",[],0, NB_LATE),
+  V("Specs' Museum Cafe",   'nb_bar','nb', 0.556,0.271,"12 William Saroyan Pl · Cash-only dive",[],0,  NB_BAR),
+  V("Tosca Cafe",           'nb_bar','nb', 0.557,0.265,"242 Columbus · Historic negronis & pasta",[],0,NB_LATE),
+  V("Comstock Saloon",      'nb_bar','nb', 0.556,0.274,"155 Columbus · Barbary Coast-era saloon",[],0, NB_BAR),
+  V("15 Romolo",            'nb_bar','nb', 0.554,0.267,"15 Romolo Pl · Dark alley cocktail bar",[],0,  NB_BAR),
+  V("Columbus Cafe",        'nb_bar','nb', 0.554,0.275,"500 Green St · 87-year-old dive",[],0,         NB_LATE),
+  V("Next Door",            'nb_bar','nb', 0.553,0.277,"Green St · Arcade bar + taqueria",[],0,        NB_LATE),
+  V("Bar Next Door",        'nb_bar','nb', 0.555,0.276,"Green St · Live jazz downstairs",[],0,         NB_LATE),
+  V("Gino & Carlo",         'nb_bar','nb', 0.550,0.280,"548 Green St · Cash-only, since 1942",['nfl'],0,NB_BAR),
+  V("The Saloon",           'nb_bar','nb', 0.548,0.278,"1232 Grant · SF's oldest bar since 1861",[],0, NB_LATE),
+  V("Tony Nik's",           'nb_bar','nb', 0.560,0.298,"1534 Stockton · Candlelit cocktail lounge",[],0,NB_BAR),
+  V("The Northstar Bar",    'nb_bar','nb', 0.552,0.282,"1560 Powell · Local's favorite",[],0,          NB_BAR),
+  V("Lillie Coit's",        'nb_bar','nb', 0.565,0.295,"1707 Powell · Late-night brasserie, oysters",[],0,NB_LATE),
+  V("Bar April Jean",       'nb_bar','nb', 0.547,0.282,"1371 Grant · Cocktails, Monday vinyl nights",[],0,NB_BAR),
+  V("Lucky Spot",           'nb_bar','nb', 0.549,0.288,"Grant Ave · Elevated dive bar",[],0,           NB_BAR),
+  V("Golden Sardine",       'nb_bar','nb', 0.554,0.270,"362 Columbus · Wine bar, charcuterie",[],0,    NB_DINNER),
+  V("Bodega North Beach",   'nb_bar','nb', 0.551,0.286,"Grant Ave · Wine bar, small plates",[],0,      NB_DINNER),
+  V("La Trappe",            'nb_bar','nb', 0.553,0.269,"800 Greenwich · Belgian beers downstairs",[],0, NB_BAR),
+  V("Church Key",           'nb_bar','nb', 0.549,0.284,"1402 Grant · Craft beer & vinyl",[],0,         NB_BAR),
+  V("Caffe Sport",          'nb_bar','nb', 0.552,0.278,"574 Green St · Italian, wild decor",[],0,      NB_DINNER),
+  V("Bix",                  'nb_bar','nb', 0.556,0.260,"56 Gold St · Jazz, 1930s glamour",[],0,        NB_LATE),
+
+  // ── ITALIAN RESTAURANTS ───────────────────────────────────────────────────
+  V("Tony's Pizza Napoletana",'nb_ital','nb',0.561,0.296,"1570 Stockton · World pizza champion",[],0,  NB_DINNER),
+  V("Capo's",               'nb_ital','nb', 0.558,0.290,"641 Vallejo · Old-school Italian",[],0,       NB_DINNER),
+  V("Sotto Mare",           'nb_ital','nb', 0.555,0.273,"552 Green St · Best cioppino in SF",[],0,     NB_DINNER),
+  V("Original Joe's",       'nb_ital','nb', 0.556,0.283,"601 Union · Classic Italian-American",[],0,   NB_ALLDAY),
+  V("Sodini's Trattoria",   'nb_ital','nb', 0.548,0.285,"510 Green St · Goodfellas vibes",[],0,        NB_DINNER),
+  V("Firenze By Night",     'nb_ital','nb', 0.550,0.278,"1429 Stockton · Award-winning gnocchi",[],0,  NB_DINNER),
+  V("North Beach Restaurant",'nb_ital','nb',0.562,0.298,"1512 Stockton · Slow & relaxed Italian",[],0, NB_DINNER),
+  V("Mona Lisa",            'nb_ital','nb', 0.549,0.288,"353 Columbus · Since 1979, Calabrese",[],0,   NB_DINNER),
+  V("Cafe Zoetrope",        'nb_ital','nb', 0.566,0.262,"916 Kearny · Coppola's historic bistro",[],0, NB_LUNCH),
+  V("Il Casaro",            'nb_ital','nb', 0.554,0.270,"348 Columbus · Neapolitan pies",[],0,         NB_DINNER),
+  V("Barbara Pinseria",     'nb_ital','nb', 0.554,0.268,"431 Columbus · Roman-style pizza",[],0,       NB_DINNER),
+  V("Red Window",           'nb_ital','nb', 0.556,0.263,"500 Columbus · Tapas, neon art bar",[],0,     NB_DINNER),
+  V("Cassava",              'nb_ital','nb', 0.555,0.265,"401 Columbus · 3-course tasting menu",[],0,   NB_DINNER),
+  V("Ideale",               'nb_ital','nb', 0.547,0.283,"1309 Grant · Roman pasta",[],0,               NB_DINNER),
+  V("Maykadeh",             'nb_ital','nb', 0.553,0.272,"470 Green St · Persian kebabs",[],0,          NB_DINNER),
+  V("Mario's Bohemian",     'nb_ital','nb', 0.557,0.288,"566 Columbus · Beer & sandwiches on park",[],0,NB_ALLDAY),
+  V("Hilda and Jesse",      'nb_ital','nb', 0.560,0.294,"701 Union · Michelin-star, fun-luxury",[],0,  NB_DINNER),
+  V("Petite Lil's",         'nb_ital','nb', 0.548,0.280,"Grant Ave · Late-night French",[],0,          NB_LATE),
+  V("Il Pollaio",           'nb_ital','nb', 0.556,0.274,"555 Columbus · Best grilled chicken",[],0,    NB_LUNCH),
+  V("Stinking Rose",        'nb_ital','nb', 0.553,0.265,"325 Columbus · All-garlic restaurant",[],0,   NB_DINNER),
+  V("Giordano Bros",        'nb_ital','nb', 0.551,0.281,"303 Columbus · Pittsburgh-style sandwiches",[],0,NB_ALLDAY),
+  V("California Fish Market",'nb_sea','nb', 0.553,0.274,"550 Green St · Fresh, sustainable seafood",[],0,NB_LUNCH),
+  V("Scoma's",              'nb_sea','nb', 0.620,0.238,"Pier 47 · Fisherman's Wharf, since 1965",[],0, NB_DINNER),
+
+  // ── CAFES & BAKERIES ──────────────────────────────────────────────────────
+  V("Caffe Trieste",        'nb_cafe','nb',0.557,0.289,"609 Vallejo · First West Coast espresso 1956",[],0,NB_CAFE),
+  V("Reveille Coffee",      'nb_cafe','nb',0.554,0.266,"200 Columbus · Great beans & avocado toast",[],0,NB_CAFE),
+  V("Liguria Bakery",       'nb_cafe','nb',0.561,0.297,"1700 Stockton · Famous focaccia since 1911",[],0,[0,0,0,0,0,6,30,65,80,75,62,50,35,20,10,5,0,0,0,0,0,0,0,0]),
+  V("Mama's",               'nb_cafe','nb',0.562,0.298,"1701 Stockton · Best breakfast, long lines",[],0,[0,0,0,0,0,5,20,55,78,82,75,65,55,42,30,18,8,0,0,0,0,0,0,0]),
+  V("Butter & Crumble",     'nb_cafe','nb',0.544,0.300,"271 Francisco · Laminated pastries",[],0,      NB_CAFE),
+  V("Golden Boy Pizza",     'pizza','nb',   0.549,0.273,"542 Green St · Cash only, late-night slices",[],0,[...EC,0,15,25,38,45,50,52,48,44,62,78,88,90,82,50]),
+  V("Molinari Deli",        'nb_cafe','nb', 0.553,0.268,"373 Columbus · Since 1896, Italian sandwiches",[],0,[...EC,0,20,55,72,78,75,70,62,52,40,25,12,0,0,0]),
+  V("Sam's",                'nb_cafe','nb', 0.556,0.275,"Green St · Anthony Bourdain's fave burger, till 2am",[],0,[...EC,0,8,18,30,42,50,48,45,50,60,68,72,70,55,35]),
+  V("Caffe Grecco",         'nb_cafe','nb', 0.556,0.268,"423 Columbus · Cash-only coffee & pastries",[],0,NB_CAFE),
+  V("Tony's Slice House",   'pizza','nb',   0.560,0.296,"1556 Stockton · Detroit to Napoli slices",[],0,NB_ALLDAY),
+];
+
 const HAPPY_VENUES=[
   {name:"The Buena Vista",    cat:'happy',nid:'nb',     cx:0.600,cy:0.285,addr:"North Beach · Famous Irish coffees",     happyStart:4, happyEnd:7, gameboost:[],         rainpenalty:0,  curve:[5,4,3,3,4,5,6,8,12,16,22,28,32,36,38,42,44,48,55,60,58,50,38,18]},
   {name:"Vesuvio Cafe",       cat:'happy',nid:'nb',     cx:0.555,cy:0.295,addr:"North Beach · Beat Generation landmark", happyStart:16,happyEnd:19,gameboost:[],         rainpenalty:0,  curve:[4,3,3,3,3,4,5,7,10,14,20,28,36,42,46,52,58,62,68,72,65,52,35,18]},
@@ -427,7 +504,7 @@ const HOLIDAY_PROFILES={
 
 let hour=currentHour,selectedVenue=null,hoverVenue=null,playing=false,playInt=null;
 // Multi-select category visibility — starts with all on
-const visibleCats=new Set(['pizza','mex','irish','dive','cock','happy','muni']);
+const visibleCats=new Set(['pizza','mex','irish','dive','cock','happy','muni','nb_ital','nb_bar','nb_cafe','nb_sea']);
 // Zoom/pan state
 let zoom=1, panX=0, panY=0;
 let isPanning=false, lastPanX=0, lastPanY=0, pinchDist0=0;
@@ -664,6 +741,7 @@ function updateBanner(){
 function getVisibleVenues(){
   const out=[];
   VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
+  NB_VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
   if(visibleCats.has('happy'))HAPPY_VENUES.forEach(v=>out.push(v));
   return out;
 }
@@ -723,6 +801,8 @@ function drawMapBase(){
   fillPoly2([[0.148,0.458],[0.305,0.458],[0.305,0.538],[0.148,0.538]],'#182a18','#1e3a1e');
   fillPoly2([[0.218,0.158],[0.342,0.158],[0.378,0.208],[0.358,0.268],[0.302,0.278],[0.238,0.252],[0.218,0.205]],'#172217','#1c301c');
   fillPoly2([[0.366,0.566],[0.396,0.566],[0.396,0.606],[0.366,0.606]],'#182a18','#1e3a1e');
+  // Washington Square Park — North Beach heart
+  fillPoly2([[0.548,0.278],[0.570,0.278],[0.570,0.296],[0.548,0.296]],'#182a18','#1e3a1e');
   fillPoly2([[0.440,0.742],[0.510,0.742],[0.510,0.800],[0.440,0.800]],'#182a18');
   fillPoly2([[0.350,0.490],[0.372,0.490],[0.372,0.515],[0.350,0.515]],'#182a18');
   fillPoly2([[0.488,0.668],[0.524,0.668],[0.524,0.700],[0.488,0.700]],'#182a18');
