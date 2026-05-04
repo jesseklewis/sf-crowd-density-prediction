@@ -153,7 +153,7 @@
       <div class="lsep"></div>
       <div class="licons">
         <div class="li"><svg width="9" height="9"><circle cx="4.5" cy="4.5" r="3.5" fill="#f97316"/></svg>Muni</div>
-        <div class="li"><span style="font-size:10px;color:#facc15;font-weight:700;line-height:1">$</span> HH</div>
+
       </div>
     </div>
     <div id="tooltip"></div>
@@ -267,7 +267,7 @@ const CATEGORIES=[
   {id:'mex',   label:'Mexican',            color:'#22c55e',dot:'#22c55e'},
   {id:'irish', label:'Irish bars',         color:'#4ade80',dot:'#16a34a'},
   {id:'dive',  label:'Dive bars',          color:'#a78bfa',dot:'#7c3aed'},
-  {id:'happy', label:'Happy hour',         color:'#facc15',dot:'#ca8a04'},
+  {id:'happy', label:'Happy hour $',       color:'#facc15',dot:'#ca8a04'},
   {id:'muni',  label:'Muni stops',         color:'#f97316',dot:'#f97316'},
 ];
 
@@ -1462,27 +1462,27 @@ function draw(){
   if(visibleCats.has('muni')){
     MUNI_STOPS.forEach(s=>{
       const[cx,cy]=px(s.cx,s.cy);
-      const sx=(cx+panX)*zoom, sy=(cy+panY)*zoom;
-      if(sx<-10||sx>W+10||sy<-10||sy>H+10)return;
+      // Cull if outside visible area
+      const scx=(cx+panX)*zoom, scy=(cy+panY)*zoom;
+      if(scx<-10||scx>W+10||scy<-10||scy>H+10)return;
       const running=muniRunning(hour,s);
       const isHov=hoverVenue&&hoverVenue._type==='muni'&&hoverVenue.name===s.name;
       const lineKeys=s.line.split('/');
       const col=lineKeys.length>2?'#b0c4de':(MUNI_LINES[lineKeys[0]]?.color||'#f97316');
-      ctx.save();ctx.setTransform(1,0,0,1,0,0);
-      if(running){ctx.beginPath();ctx.arc(sx,sy,isHov?9:7,0,Math.PI*2);ctx.fillStyle=col+'44';ctx.fill();}
-      ctx.beginPath();ctx.arc(sx,sy,isHov?6:4,0,Math.PI*2);
+      // Draw at map coords but scale sizes by 1/zoom for fixed screen size
+      const rOuter=(isHov?9:7)/zoom, rInner=(isHov?6:4)/zoom, rDot=(isHov?5:3)/zoom;
+      if(running){ctx.beginPath();ctx.arc(cx,cy,rOuter,0,Math.PI*2);ctx.fillStyle=col+'44';ctx.fill();}
+      ctx.beginPath();ctx.arc(cx,cy,rInner,0,Math.PI*2);
       ctx.fillStyle=running?'#fff':'#333';ctx.fill();
-      ctx.strokeStyle=running?col:'#2a2a2a';ctx.lineWidth=running?2:1;
-      ctx.beginPath();ctx.arc(sx,sy,isHov?6:4,0,Math.PI*2);ctx.stroke();
-      ctx.beginPath();ctx.arc(sx,sy,isHov?5:3,0,Math.PI*2);
+      ctx.strokeStyle=running?col:'#2a2a2a';ctx.lineWidth=(running?2:1)/zoom;
+      ctx.beginPath();ctx.arc(cx,cy,rInner,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.arc(cx,cy,rDot,0,Math.PI*2);
       ctx.fillStyle=running?col:'#444';ctx.fill();
-      // Stop name label at high zoom
       if(zoom>=4&&running){
-        ctx.font='9px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+        ctx.font=`${9/zoom}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='top';
         ctx.fillStyle='rgba(255,255,255,0.7)';
-        ctx.fillText(s.name,sx,sy+8);
+        ctx.fillText(s.name,cx,cy+8/zoom);
       }
-      ctx.restore();
     });
   }
 
@@ -1494,88 +1494,81 @@ function draw(){
     return aTop-bTop;
   });
 
-  // Dots use fixed screen-space size so they don't grow with zoom
-  const DOT_R = 4; // constant screen pixels
-  const DOT_R_SEL = 6;
-  const labelRects = []; // collision list for label placement
+  // Fixed screen-size dots: draw at map coords but scale by 1/zoom
+  const DOT_R = 4/zoom;
+  const DOT_R_SEL = 6/zoom;
+  const labelRects = [];
 
   visVenues.forEach(v=>{
     const d=liveValue(v);const cat=CATEGORIES.find(c=>c.id===v.cat);
     const[cx,cy]=px(v.cx,v.cy);
     const isH=hoverVenue===v,isS=selectedVenue===v;
-    // Convert map coords to screen coords for fixed-size drawing
-    const sx=(cx+panX)*zoom, sy=(cy+panY)*zoom;
-    // Skip if outside canvas
-    if(sx<-20||sx>W+20||sy<-20||sy>H+20)return;
+    // Cull
+    const scx=(cx+panX)*zoom, scy=(cy+panY)*zoom;
+    if(scx<-20||scx>W+20||scy<-20||scy>H+20)return;
 
     const r=isH||isS?DOT_R_SEL:DOT_R;
-
-    // Draw in screen space (after restoring transform)
-    ctx.save();
-    ctx.setTransform(1,0,0,1,0,0); // reset to screen space
     // Shadow
-    ctx.beginPath();ctx.arc(sx,sy,r+1.5,0,Math.PI*2);
+    ctx.beginPath();ctx.arc(cx,cy,r+1.5/zoom,0,Math.PI*2);
     ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fill();
     // Fill
-    ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
     ctx.fillStyle=cat.color;ctx.fill();
     // Selected ring
     if(isH||isS){
-      ctx.beginPath();ctx.arc(sx,sy,r+3,0,Math.PI*2);
-      ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.beginPath();ctx.arc(cx,cy,r+3/zoom,0,Math.PI*2);
+      ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.5/zoom;ctx.stroke();
     }
-    // Density indicator — small inner ring shows busyness
+    // Density indicator
     if(d>0){
-      ctx.beginPath();ctx.arc(sx,sy,r*0.45,0,Math.PI*2);
+      ctx.beginPath();ctx.arc(cx,cy,r*0.45,0,Math.PI*2);
       ctx.fillStyle=`rgba(255,255,255,${0.15+d*0.005})`;ctx.fill();
     }
-    ctx.restore();
 
-    // Labels — only when zoomed in, with collision detection
+    // Labels with collision detection (in screen space coords for collision math)
     if(zoom>=3){
-      const fontSize=Math.max(9,Math.min(12,zoom*1.4));
-      ctx.save();
-      ctx.setTransform(1,0,0,1,0,0);
-      ctx.font=`${fontSize}px -apple-system,sans-serif`;
-      const tw=ctx.measureText(v.name).width;
-      const lx=sx, ly=sy+r+3+fontSize*0.5;
-      const rect={x:lx-tw/2-2,y:ly-fontSize*0.6,w:tw+4,h:fontSize+2};
-      // Check collision with existing labels
-      const collides=labelRects.some(lr=>
+      const fontSize=Math.max(7,Math.min(11,10/zoom*zoom)); // ~10px on screen
+      const fontSzMap=fontSize/zoom; // font size in map coords
+      ctx.font=`${fontSzMap}px -apple-system,sans-serif`;
+      const tw=ctx.measureText(v.name).width; // width in map coords
+      // label position in map coords
+      const lx=cx, ly=cy+r+2/zoom+fontSzMap*0.5;
+      // collision check in screen coords
+      const slx=lx*zoom+panX*zoom, sly=ly*zoom+panY*zoom;
+      const stw=tw*zoom;
+      const rect={x:slx-stw/2-2,y:sly-fontSize*0.6,w:stw+4,h:fontSize+2};
+      const collides=(!isH&&!isS)&&labelRects.some(lr=>
         rect.x<lr.x+lr.w&&rect.x+rect.w>lr.x&&rect.y<lr.y+lr.h&&rect.y+rect.h>lr.y
       );
-      if(!collides||isH||isS){
+      if(!collides){
         labelRects.push(rect);
-        // Dark pill background for readability
-        ctx.fillStyle='rgba(0,0,0,0.55)';
-        ctx.beginPath();
-        ctx.roundRect(rect.x,rect.y,rect.w,rect.h,3);
-        ctx.fill();
-        ctx.fillStyle=isH||isS?'#fff':'rgba(255,255,255,0.82)';
+        // Pill bg in map coords
+        const pw=tw+4/zoom, ph=fontSzMap+2/zoom;
+        ctx.fillStyle='rgba(0,0,0,0.58)';
+        ctx.fillRect(lx-pw/2,ly-ph/2,pw,ph);
+        ctx.fillStyle=isH||isS?'#fff':'rgba(255,255,255,0.85)';
         ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillText(v.name,lx,ly);
       }
-      ctx.restore();
     }
   });
 
   if(visibleCats.has('happy')){
     HAPPY_VENUES.forEach(v=>{
       const[cx,cy]=px(v.cx,v.cy);
-      const sx=(cx+panX)*zoom, sy=(cy+panY)*zoom;
-      if(sx<-20||sx>W+20||sy<-20||sy>H+20)return;
+      const scx=(cx+panX)*zoom, scy=(cy+panY)*zoom;
+      if(scx<-20||scx>W+20||scy<-20||scy>H+20)return;
       const state=happyState(hour,v);const br=happyBr(hour,v);
       const isH=hoverVenue===v,isS=selectedVenue===v;const active=state!=='off';
-      ctx.save();ctx.setTransform(1,0,0,1,0,0);
+      // All sizes divided by zoom for fixed screen size
       if(active){
-        ctx.beginPath();ctx.arc(sx,sy,10,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.12*br})`;ctx.fill();
-        ctx.beginPath();ctx.arc(sx,sy,7,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.22*br})`;ctx.fill();
+        ctx.beginPath();ctx.arc(cx,cy,10/zoom,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.12*br})`;ctx.fill();
+        ctx.beginPath();ctx.arc(cx,cy,7/zoom,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.22*br})`;ctx.fill();
       }
-      ctx.font=`bold 11px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font=`bold ${11/zoom}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillStyle=active?`rgba(${state==='ending'?'250,204,21':'255,220,50'},${br})`:'rgba(80,60,20,0.7)';
-      ctx.fillText('$',sx,sy);
-      if(isH||isS){ctx.beginPath();ctx.arc(sx,sy,9,0,Math.PI*2);ctx.strokeStyle=active?'rgba(250,204,21,0.8)':'rgba(80,60,20,0.5)';ctx.lineWidth=1.5;ctx.stroke();}
-      ctx.restore();
+      ctx.fillText('$',cx,cy);
+      if(isH||isS){ctx.beginPath();ctx.arc(cx,cy,9/zoom,0,Math.PI*2);ctx.strokeStyle=active?'rgba(250,204,21,0.8)':'rgba(80,60,20,0.5)';ctx.lineWidth=1.5/zoom;ctx.stroke();}
     });
   }
 
@@ -1683,26 +1676,18 @@ function buildCats(){
 }
 
 function hitTest(sx,sy){
-  // sx,sy are already in canvas logical coords (accounting for devicePixelRatio via getBoundingClientRect scaling)
-  const threshold=14; // screen pixels — fixed regardless of zoom
+  // sx,sy are canvas logical coords; convert to map coords then test
+  const[mx,my]=screenToMap(sx,sy);
+  const threshold=14/zoom/W; // ~14 screen px in map-fraction units
   let best=null,bestD=threshold;
-
-  // Muni stops — map coords converted to screen
   if(visibleCats.has('muni'))MUNI_STOPS.forEach(s=>{
-    const[cx,cy]=px(s.cx,s.cy);
-    const scx=(cx+panX)*zoom, scy=(cy+panY)*zoom;
-    const d=Math.hypot(sx-scx,sy-scy);
+    const d=Math.hypot(mx-s.cx,my-s.cy);
     if(d<bestD){bestD=d;best={...s,_type:'muni'};}
   });
-
-  // Venues — screen-space distance
   getVisibleVenues().forEach(v=>{
-    const[cx,cy]=px(v.cx,v.cy);
-    const scx=(cx+panX)*zoom, scy=(cy+panY)*zoom;
-    const d=Math.hypot(sx-scx,sy-scy);
+    const d=Math.hypot(mx-v.cx,my-v.cy);
     if(d<bestD){bestD=d;best=v;}
   });
-
   return best;
 }
 
