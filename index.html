@@ -20,7 +20,7 @@
       --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     html { touch-action: manipulation; }
-    body { font-family: var(--font); background: var(--color-bg); color: var(--color-text); min-height: 100vh; -webkit-text-size-adjust: 100%; }
+    body { font-family: var(--font); background: var(--color-bg); color: var(--color-text); min-height: 100vh; -webkit-text-size-adjust: 100%; transition: background 2s ease; }
     .app { max-width: 680px; margin: 0 auto; padding: 12px 12px 60px; }
     .app-header { margin-bottom: 12px; }
     .app-header h1 { font-size: 18px; font-weight: 500; }
@@ -1066,11 +1066,217 @@ const MUNI_ROUTES=[
 ];
 function drawPoly(pts,color,width){ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';pts.forEach(([rx,ry],i)=>{const[x,y]=px(rx,ry);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}
 function fillPoly2(pts,fill,stroke,sw){ctx.beginPath();pts.forEach(([rx,ry],i)=>{const[x,y]=px(rx,ry);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=sw||0.7;ctx.stroke();}}
+function getSkyColors(min) {
+  // minute of day 0-1439, returns sky gradient stops & sun position/color
+  const t = min / 1440; // 0-1 fraction through the day
+  const phases = [
+    // [minuteStart, topColor, horizColor, label]
+    [0,    '#010208', '#050810', 'deep night'],       // midnight
+    [240,  '#010208', '#050810', 'deep night'],       // 4am (our start)
+    [300,  '#010812', '#0a1528', 'pre-dawn'],         // 5am
+    [330,  '#060a1a', '#1a1030', 'civil twilight'],   // 5:30am
+    [360,  '#0d0a28', '#3d1a22', 'nautical dawn'],    // 6am
+    [390,  '#1a0a2e', '#8b2252', 'astronomical dawn'],// 6:30am
+    [420,  '#1e1040', '#c0524a', 'dawn glow'],        // 7am
+    [450,  '#1e2060', '#e87858', 'golden hour'],      // 7:30am
+    [480,  '#2040a8', '#f5c070', 'sunrise'],          // 8am
+    [510,  '#3060c8', '#a8c8f0', 'morning'],          // 8:30am
+    [540,  '#3878e8', '#88b8f0', 'late morning'],     // 9am
+    [600,  '#4090f0', '#6aaaf8', 'midday approach'], // 10am
+    [720,  '#3888f0', '#5898f5', 'noon'],             // 12pm
+    [900,  '#3070e0', '#5090f0', 'afternoon'],        // 3pm
+    [1020, '#2860d0', '#7aaae8', 'late afternoon'],   // 5pm
+    [1050, '#1e50c0', '#90a8e0', 'pre-golden'],       // 5:30pm
+    [1080, '#1840a0', '#d4905a', 'golden hour PM'],   // 6pm
+    [1110, '#102880', '#e87840', 'near sunset'],      // 6:30pm
+    [1140, '#0a1860', '#d05020', 'sunset'],           // 7pm
+    [1170, '#080e40', '#a02818', 'dusk'],             // 7:30pm
+    [1200, '#060830', '#501008', 'civil dusk'],       // 8pm
+    [1230, '#040520', '#200808', 'twilight'],         // 8:30pm
+    [1260, '#020310', '#080308', 'night'],            // 9pm
+    [1320, '#010208', '#030208', 'deep night'],       // 11pm
+    [1440, '#010208', '#050810', 'deep night'],       // wrap
+  ];
+  
+  // Find surrounding phases
+  let i = 0;
+  for(let j=0;j<phases.length-1;j++){if(min>=phases[j][0]&&min<phases[j+1][0]){i=j;break;}}
+  const [m0,t0,h0] = phases[i];
+  const [m1,t1,h1] = phases[Math.min(i+1,phases.length-1)];
+  const f = (m1>m0) ? Math.max(0,Math.min(1,(min-m0)/(m1-m0))) : 0;
+  
+  const lerp=(a,b,t)=>{
+    const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);
+    const r=Math.round(((pa>>16)&0xff)*(1-t)+((pb>>16)&0xff)*t);
+    const g=Math.round(((pa>>8)&0xff)*(1-t)+((pb>>8)&0xff)*t);
+    const bl=Math.round((pa&0xff)*(1-t)+(pb&0xff)*t);
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bl.toString(16).padStart(2,'0')}`;
+  };
+  
+  return { top: lerp(t0,t1,f), horizon: lerp(h0,h1,f) };
+}
+
+function getSunState(min, srHour, ssHour) {
+  // Returns sun position (rx 0-1 across map, ry 0-1 down sky), size, color, opacity
+  const srMin = srHour * 60;
+  const ssMin = ssHour * 60;
+  const dayLen = ssMin - srMin;
+  const nightLen = 1440 - dayLen;
+  
+  // Is it daytime?
+  const isDay = min >= srMin && min <= ssMin;
+  const isMorningTwilight = min >= srMin - 60 && min < srMin;
+  const isEveningTwilight = min > ssMin && min <= ssMin + 60;
+  
+  if (!isDay && !isMorningTwilight && !isEveningTwilight) {
+    return null; // no sun visible
+  }
+  
+  let progress, opacity, size, color;
+  
+  if (isDay) {
+    progress = (min - srMin) / dayLen; // 0=sunrise(east), 1=sunset(west)
+    opacity = 1;
+    // Peak brightness at solar noon
+    const noon = 0.5;
+    const distFromNoon = Math.abs(progress - noon);
+    size = 12 + 6 * (1 - distFromNoon * 2);
+    // Color: orange at sunrise/sunset, white-yellow at peak
+    const sunColors = progress < 0.15 || progress > 0.85
+      ? [255, 160, 60]   // orange
+      : progress < 0.3 || progress > 0.7
+      ? [255, 220, 80]   // golden
+      : [255, 248, 180]; // near-white peak
+    color = sunColors;
+  } else if (isMorningTwilight) {
+    progress = 0; // just below horizon east
+    opacity = (min - (srMin - 60)) / 60;
+    size = 10;
+    color = [255, 130, 40];
+  } else {
+    progress = 1; // just below horizon west
+    opacity = 1 - (min - ssMin) / 60;
+    size = 10;
+    color = [255, 120, 40];
+  }
+  
+  // Sun travels right-to-left (east=right in SF facing north)
+  // At sunrise (progress=0): far right of map (east/bay side) cx≈0.80
+  // At sunset (progress=1): far left of map (west/ocean) cx≈0.08
+  const rx = 0.80 - progress * 0.72;
+  
+  // Arc height: sun is low at horizon (ry≈0.22), peaks at ry≈0.06 at solar noon
+  const arcHeight = Math.sin(progress * Math.PI);
+  const ry = isDay ? 0.22 - arcHeight * 0.16 : 0.22;
+  
+  return { rx, ry, size, color, opacity };
+}
+
+function drawSky(min) {
+  const sky = getSkyColors(min);
+  const grad = ctx.createLinearGradient(0, 0, 0, H * 0.35);
+  grad.addColorStop(0, sky.top);
+  grad.addColorStop(1, sky.horizon);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  
+  // Stars at night
+  const nightness = min < 360 ? 1 : min < 420 ? 1 - (min-360)/60 : min > 1200 ? (min-1200)/60 : min > 1140 ? (min-1140)/60 : 0;
+  if (nightness > 0.05) {
+    ctx.fillStyle = `rgba(255,255,255,${nightness * 0.6})`;
+    // Fixed star positions (deterministic from seed)
+    const stars = [[0.15,0.05],[0.28,0.03],[0.42,0.07],[0.55,0.02],[0.68,0.05],[0.82,0.03],
+      [0.10,0.09],[0.35,0.11],[0.50,0.08],[0.72,0.10],[0.88,0.06],[0.20,0.13],[0.60,0.14],
+      [0.78,0.12],[0.08,0.15],[0.45,0.15],[0.90,0.12],[0.32,0.04],[0.65,0.08],[0.85,0.14]];
+    stars.forEach(([rx,ry])=>{
+      const[x,y]=px(rx,ry*0.5);
+      ctx.beginPath();ctx.arc(x,y,0.6,0,Math.PI*2);ctx.fill();
+    });
+  }
+  
+  // Moon at night
+  if (nightness > 0.3) {
+    const moonRx = 0.25; // roughly NW part of sky
+    const moonRy = 0.08;
+    const [mx,my] = px(moonRx, moonRy * 0.5);
+    ctx.beginPath();ctx.arc(mx,my,8,0,Math.PI*2);
+    ctx.fillStyle=`rgba(220,225,255,${nightness * 0.85})`;ctx.fill();
+    ctx.beginPath();ctx.arc(mx+3,my-1,7,0,Math.PI*2);
+    ctx.fillStyle=sky.top;ctx.fill(); // crescent cutout
+  }
+  
+  // Fog layer (SF-specific!) — pale at horizon
+  const isMorning = min > 360 && min < 600;
+  const isEvening = min > 1020 && min < 1140;
+  if (isMorning || isEvening) {
+    const fogAlpha = isMorning ? Math.sin((min-360)/240*Math.PI)*0.18 : Math.sin((min-1020)/120*Math.PI)*0.15;
+    const fogGrad = ctx.createLinearGradient(0, H*0.18, 0, H*0.30);
+    fogGrad.addColorStop(0, `rgba(180,195,220,0)`);
+    fogGrad.addColorStop(1, `rgba(180,195,220,${fogAlpha})`);
+    ctx.fillStyle = fogGrad;
+    ctx.fillRect(0, H*0.18, W, H*0.12);
+  }
+}
+
+function drawSun(min) {
+  const state = getSunState(min, sunriseHour, sunsetHour);
+  if (!state) return;
+  
+  const [sx, sy] = px(state.rx, state.ry);
+  const {size, color, opacity} = state;
+  const [r,g,b] = color;
+  
+  // Outer corona / atmospheric glow
+  const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, size * 4.5);
+  glow.addColorStop(0, `rgba(${r},${g},${b},${opacity * 0.35})`);
+  glow.addColorStop(0.4, `rgba(${r},${Math.max(0,g-30)},${Math.max(0,b-60)},${opacity * 0.12})`);
+  glow.addColorStop(1, `rgba(${r},${Math.max(0,g-60)},0,0)`);
+  ctx.beginPath();ctx.arc(sx,sy,size*4.5,0,Math.PI*2);
+  ctx.fillStyle=glow;ctx.fill();
+  
+  // Inner glow
+  const inner = ctx.createRadialGradient(sx, sy, 0, sx, sy, size * 2);
+  inner.addColorStop(0, `rgba(${r},${g},${b},${opacity * 0.6})`);
+  inner.addColorStop(1, `rgba(${r},${g},${b},0)`);
+  ctx.beginPath();ctx.arc(sx,sy,size*2,0,Math.PI*2);
+  ctx.fillStyle=inner;ctx.fill();
+  
+  // Sun disc
+  ctx.beginPath();ctx.arc(sx,sy,size,0,Math.PI*2);
+  ctx.fillStyle=`rgba(${r},${g},${b},${opacity})`;ctx.fill();
+  
+  // Bright highlight
+  ctx.beginPath();ctx.arc(sx-size*0.3,sy-size*0.3,size*0.4,0,Math.PI*2);
+  ctx.fillStyle=`rgba(255,255,255,${opacity * 0.5})`;ctx.fill();
+  
+  // Horizon reflection glow strip (sunrise/sunset)
+  const isGolden = (min > 390 && min < 540) || (min > 1080 && min < 1170);
+  if (isGolden) {
+    const horizY = H * 0.30;
+    const hGrad = ctx.createLinearGradient(0, horizY - 8, 0, horizY + 20);
+    hGrad.addColorStop(0, `rgba(${r},${Math.max(0,g-20)},0,0)`);
+    hGrad.addColorStop(0.4, `rgba(${r},${Math.max(0,g-20)},0,${opacity * 0.25})`);
+    hGrad.addColorStop(1, `rgba(${r},${Math.max(0,g-40)},0,0)`);
+    ctx.fillStyle = hGrad;
+    ctx.fillRect(0, horizY - 8, W, 28);
+  }
+}
+
 function drawMapBase(){
-  ctx.fillStyle='#0d1520';ctx.fillRect(0,0,W,H);
+  drawSky(minute);
+  drawSun(minute);
+  // Water/ocean tint synced with sky tone
+  const skyC = getSkyColors(minute);
   ctx.strokeStyle='rgba(18,45,80,0.20)';ctx.lineWidth=0.35;
   for(let y=0.025;y<1;y+=0.028){const[,py0]=px(0,y);ctx.beginPath();ctx.moveTo(0,py0);ctx.lineTo(W,py0);ctx.stroke();}
-  fillPoly2([
+  // Land tone shifts: dark blue-gray at night, warm gray in day, amber at sunset
+  const mn=minute;
+  const isNight=mn<360||mn>1260;
+  const isDay=mn>540&&mn<1080;
+  const isGoldenHr=(mn>420&&mn<540)||(mn>1080&&mn<1170);
+  const landBase = isNight?'#0e1420':isGoldenHr?'#1a1818':isDay?'#161d2c':'#111828';
+  const fillPoly2Land=(pts)=>{ctx.beginPath();pts.forEach(([rx,ry],i)=>{const[x,y]=px(rx,ry);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();ctx.fillStyle=landBase;ctx.fill();};
+  fillPoly2Land([
     // South/SW coast — ocean side
     [0.100,1.00],[0.100,0.820],[0.108,0.780],[0.112,0.745],[0.118,0.710],
     [0.122,0.668],[0.118,0.628],[0.112,0.590],[0.108,0.558],
@@ -1103,7 +1309,7 @@ function drawMapBase(){
     [0.705,0.752],[0.698,0.778],[0.692,0.805],
     [0.685,0.830],[0.678,0.858],[0.670,0.885],
     [0.660,0.912],[0.645,0.942],[0.625,0.968],[0.600,1.00],
-  ],'#161d2e');
+  ]);
   fillPoly2([[0.148,0.458],[0.305,0.458],[0.305,0.538],[0.148,0.538]],'#182a18','#1e3a1e');
   fillPoly2([[0.218,0.158],[0.342,0.158],[0.378,0.208],[0.358,0.268],[0.302,0.278],[0.238,0.252],[0.218,0.205]],'#172217','#1c301c');
   fillPoly2([[0.366,0.566],[0.396,0.566],[0.396,0.606],[0.366,0.606]],'#182a18','#1e3a1e');
@@ -1444,12 +1650,30 @@ canvas.addEventListener('dblclick',e=>{
   else{const newZoom=Math.min(MAX_ZOOM,zoom*2);panX=mx/newZoom-mx/zoom+panX*(zoom/newZoom);panY=my/newZoom-my/zoom+panY*(zoom/newZoom);zoom=newZoom;}
   clampPan();draw();
 });
+function getPageBg(min) {
+  // Match approximate sky color for the page background
+  if(min<360||min>1320) return '#030508';  // deep night
+  if(min<420) return '#080a18';             // pre-dawn
+  if(min<480) return '#10082a';             // dawn
+  if(min<540) return '#162040';             // morning glow
+  if(min<600) return '#1a2848';             // morning
+  if(min<1020) return '#0f1825';            // day
+  if(min<1080) return '#161822';            // late afternoon
+  if(min<1140) return '#18100e';            // golden hour
+  if(min<1200) return '#100808';            // dusk
+  if(min<1260) return '#080510';            // twilight
+  return '#030508';                          // night
+}
+
 function syncTime(slot){
   minute=slotToMinutes(slot);
   hour=Math.floor(minute/60)%24;
   const t=fmtMinute(minute);
   document.getElementById('time-display').textContent=t;
   document.getElementById('time-display-main').textContent=t;
+  // Shift page background with time of day
+  document.body.style.background=getPageBg(minute);
+  document.querySelector('.app').style.background='transparent';
 }
 document.getElementById('time-range').addEventListener('input',e=>{
   syncTime(+e.target.value);updateVenuePanel();draw();
