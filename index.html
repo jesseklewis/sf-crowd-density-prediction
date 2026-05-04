@@ -168,7 +168,10 @@
         <div class="time-display-inline" id="time-display-main">--</div>
         <div class="time-date-inline" id="date-display-main">San Francisco</div>
       </div>
-      <button id="play-btn">&#9654;</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;color:var(--color-text3)">Pinch or scroll to zoom</span>
+        <button id="play-btn">&#9654;</button>
+      </div>
     </div>
     <div class="time-track">
       <input type="range" id="time-range" min="0" max="239" value="0" step="1">
@@ -287,6 +290,8 @@ const NEIGHBORHOODS=[
   {id:'bakerbeach',name:'Baker Beach',cx:0.175,cy:0.25,curve:[1,1,1,1,1,2,4,8,14,18,22,24,22,20,22,26,32,42,58,78,65,30,10,3]},
   // Marina / Crissy Field — also a sunset spot
   {id:'marina',   name:'Marina',     cx:0.38,cy:0.19,curve:[3,2,2,2,2,3,5,8,14,18,22,26,28,30,32,36,40,50,65,72,60,42,22,8]},
+  // Inner Richmond — bars around Geary/Clement
+  {id:'richmond', name:'Richmond',   cx:0.23,cy:0.33,curve:[2,2,2,2,2,2,3,5,8,12,18,24,28,32,35,38,40,45,52,58,60,52,38,18]},
 ];
 
 const MUNI_STOPS=[
@@ -334,21 +339,65 @@ const MUNI_STOPS=[
   {name:'Union Sq/Market',   line:'T',          cx:0.648,cy:0.388,runStart:5,runEnd:1},
 ];
 
+const V=(name,cat,nid,cx,cy,addr,gb,rp,curve)=>({name,cat,nid,cx,cy,addr,gameboost:gb,rainpenalty:rp,curve});
+const EC=[0,0,0,0,0,0,0,0]; // early closed hours
 const VENUES=[
-  {name:"Golden Boy Pizza",  cat:'pizza',nid:'nb',     cx:0.535,cy:0.29, addr:"North Beach · Cash only",          gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,0,0,15,25,38,45,50,52,48,44,62,78,88,90,82,50]},
-  {name:"Escape from NY",    cat:'pizza',nid:'haight', cx:0.305,cy:0.50, addr:"Haight · Late night slices",       gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,12,18,22,28,32,36,38,40,38,42,55,65,70,72,60,35]},
-  {name:"Arinell Pizza",     cat:'pizza',nid:'mission',cx:0.41, cy:0.57, addr:"Mission · NY-style slices",        gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,10,15,22,30,38,42,45,46,44,46,58,68,72,70,55,28]},
-  {name:"La Taqueria",       cat:'mex',  nid:'mission',cx:0.43, cy:0.63, addr:"Mission · James Beard winner",     gameboost:[],            rainpenalty:5,  curve:[0,0,0,0,0,0,0,0,0,12,20,30,55,70,72,65,58,52,46,38,22,12,5,0]},
-  {name:"El Farolito",       cat:'mex',  nid:'mission',cx:0.42, cy:0.66, addr:"Mission · Open 24 hours",          gameboost:[],            rainpenalty:0,  curve:[5,4,4,3,3,4,6,10,18,22,30,40,55,62,60,55,50,55,65,72,78,80,72,55]},
-  {name:"Gracias Madre",     cat:'mex',  nid:'mission',cx:0.395,cy:0.58, addr:"Mission · Plant-based cocktails",  gameboost:[],            rainpenalty:8,  curve:[0,0,0,0,0,0,0,0,0,0,10,20,35,48,55,60,62,68,75,72,60,40,18,0]},
-  {name:"Plough & Stars",    cat:'irish',nid:'nb',     cx:0.545,cy:0.30, addr:"North Beach · Live trad sessions", gameboost:['nfl','nba'], rainpenalty:0,  curve:[5,4,3,3,3,4,5,6,8,10,14,18,22,28,32,36,40,50,68,80,85,82,72,45]},
-  {name:"Durty Nelly's",     cat:'irish',nid:'tender', cx:0.505,cy:0.44, addr:"Tenderloin · Full Irish menu",     gameboost:['nfl'],       rainpenalty:0,  curve:[4,3,3,3,3,4,5,8,14,20,28,35,40,44,46,48,50,55,65,72,75,70,55,30]},
-  {name:"The Chieftain",     cat:'irish',nid:'soma',   cx:0.525,cy:0.54, addr:"SoMa · 20+ sports screens",       gameboost:['nfl','nba','mlb'],rainpenalty:0,curve:[4,3,3,3,3,4,5,8,15,22,30,38,42,45,50,60,65,68,75,78,72,60,38,18]},
-  {name:"The Uptown",        cat:'dive', nid:'mission',cx:0.435,cy:0.61, addr:"Mission · Pool tables",            gameboost:[],            rainpenalty:5,  curve:[3,2,2,2,2,3,4,5,6,10,14,18,22,26,30,35,40,50,62,72,78,80,70,45]},
-  {name:"Hi Dive",           cat:'dive', nid:'dog',    cx:0.595,cy:0.67, addr:"Dogpatch · Waterfront live music", gameboost:['mlb'],       rainpenalty:15, curve:[2,2,2,2,2,2,3,4,5,8,12,16,20,24,28,32,38,48,60,68,72,65,48,22]},
-  {name:"Smuggler's Cove",   cat:'cock', nid:'haight', cx:0.32, cy:0.505,addr:"Haight · 550+ rums, tiki",         gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,0,0,0,5,12,18,22,28,32,40,58,72,82,85,78,50]},
-  {name:"Pagan Idol",        cat:'cock', nid:'fidi',   cx:0.525,cy:0.44, addr:"FiDi · Elaborate tiki lounge",     gameboost:[],            rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,0,5,10,15,22,28,32,35,38,48,65,78,82,80,65,35]},
-  {name:"Elixir",            cat:'cock', nid:'mission',cx:0.405,cy:0.55, addr:"Mission · Oldest craft cocktail bar",gameboost:[],           rainpenalty:0,  curve:[0,0,0,0,0,0,0,0,0,5,12,20,30,38,42,48,52,58,68,75,80,78,65,38]},
+  // ── PIZZA BY THE SLICE ───────────────────────────────────────────────────
+  V("Golden Boy Pizza",    'pizza','nb',     0.536,0.291,"North Beach · Cash only, late night",[],0,        [...EC,0,15,25,38,45,50,52,48,44,62,78,88,90,82,50]),
+  V("Escape from NY",      'pizza','haight', 0.308,0.502,"Haight · NY-style late night slices",[],0,        [0,0,0,0,0,0,0,0,12,18,22,28,32,36,38,40,38,42,55,65,70,72,60,35]),
+  V("Arinell Pizza",       'pizza','mission',0.412,0.572,"Mission · New York-style slices",[],0,             [...EC,10,15,22,30,38,42,45,46,44,46,58,68,72,70,55,28]),
+  V("Little Star Pizza",   'pizza','mission',0.408,0.558,"Mission · Deep dish & thin crust",[],0,           [...EC,0,10,18,28,38,48,52,50,46,55,65,70,65,45,20]),
+  V("Gialina",             'pizza','dog',    0.592,0.658,"Dogpatch · Artisan Neapolitan pizza",[],0,         [...EC,0,0,12,22,35,45,48,45,40,48,60,65,55,32,10]),
+  V("Tony's Pizza",        'pizza','nb',     0.548,0.294,"North Beach · World Pizza champ",[],0,             [...EC,0,12,25,40,52,58,56,50,55,68,78,80,65,38,12]),
+  V("Pizzetta 211",        'pizza','richmond',0.222,0.328,"Inner Richmond · Tiny, perfect pies",[],0,        [...EC,0,0,8,18,30,40,42,38,35,40,50,55,45,22,5]),
+  V("Del Popolo",          'pizza','tender', 0.522,0.448,"Tenderloin · Wood-fired truck-turned-restaurant",[],0,[...EC,0,0,12,22,35,48,52,48,45,55,65,68,55,28,8]),
+  V("Slice House",         'pizza','soma',   0.558,0.518,"SoMa · By the slice, late night",[],0,            [...EC,0,8,15,25,35,42,40,38,42,55,65,72,68,48,25]),
+  // ── MEXICAN ──────────────────────────────────────────────────────────────
+  V("La Taqueria",         'mex','mission',  0.432,0.628,"Mission · James Beard Award winner",[],5,          [...EC,0,12,20,30,55,70,72,65,58,52,46,38,22,12,5]),
+  V("El Farolito",         'mex','mission',  0.422,0.658,"Mission · Open 24 hours",[],0,                    [5,4,4,3,3,4,6,10,18,22,30,40,55,62,60,55,50,55,65,72,78,80,72,55]),
+  V("Gracias Madre",       'mex','mission',  0.396,0.582,"Mission · Plant-based Mexican",[],8,               [...EC,0,0,10,20,35,48,55,60,62,68,75,72,60,40,18]),
+  V("Nopalito",            'mex','haight',   0.312,0.508,"Haight · Organic Mexican cantina",[],5,            [...EC,0,0,8,18,32,45,52,55,52,48,55,60,52,28,8]),
+  V("Papalote",            'mex','mission',  0.418,0.592,"Mission · Famous salsa, burrito spot",[],0,        [...EC,0,8,18,28,45,58,62,58,52,48,42,35,20,8,2]),
+  V("El Buen Sabor",       'mex','mission',  0.428,0.612,"Mission · Cheap, classic taqueria",[],0,           [...EC,0,12,22,32,48,60,62,58,52,48,42,35,22,10,3]),
+  V("Taqueria Cancun",     'mex','mission',  0.425,0.648,"Mission · Late-night Mission burrito",[],0,        [3,2,2,2,2,3,5,8,15,20,30,42,58,65,62,58,52,55,65,72,75,72,60,40]),
+  V("Poc Chuc",            'mex','mission',  0.402,0.562,"Mission · Yucatecan cuisine",[],5,                 [...EC,0,0,5,15,28,40,48,50,48,42,38,30,18,5,0]),
+  V("Tacorgasmico",        'mex','nb',       0.545,0.308,"North Beach · Tacos & mezcal",[],0,               [...EC,0,0,8,18,30,40,48,52,48,42,50,58,52,30,10]),
+  V("Mamacita",            'mex','marina',   0.382,0.208,"Marina · Upscale Mexican, great margs",[],0,       [...EC,0,0,0,10,22,35,45,50,55,60,65,68,55,30,8]),
+  // ── IRISH BARS ───────────────────────────────────────────────────────────
+  V("Plough & Stars",      'irish','nb',     0.546,0.302,"North Beach · Live trad music Fri–Sat",['nfl','nba'],0,[5,4,3,3,3,4,5,6,8,10,14,18,22,28,32,36,40,50,68,80,85,82,72,45]),
+  V("Durty Nelly's",       'irish','tender', 0.506,0.442,"Tenderloin · Full Irish menu & pints",['nfl'],0,   [4,3,3,3,3,4,5,8,14,20,28,35,40,44,46,48,50,55,65,72,75,70,55,30]),
+  V("The Chieftain",       'irish','soma',   0.526,0.542,"SoMa · 20+ sports screens",['nfl','nba','mlb'],0, [4,3,3,3,3,4,5,8,15,22,30,38,42,45,50,60,65,68,75,78,72,60,38,18]),
+  V("Mad Dog in the Fog",  'irish','haight', 0.322,0.512,"Haight · Neighborhood Irish pub",['nfl'],0,        [3,2,2,2,2,3,4,6,10,14,20,28,36,42,48,52,50,55,65,72,75,70,55,28]),
+  V("Ireland's 32",        'irish','richmond',0.218,0.322,"Inner Richmond · Cash-only classic",['nfl'],0,    [3,2,2,2,2,3,4,6,8,12,18,25,32,38,42,48,52,58,65,70,68,60,42,18]),
+  V("O'Reilly's",          'irish','nb',     0.552,0.298,"North Beach · Sports bar & pints",['nfl','nba','mlb'],0,[3,2,2,2,2,3,4,6,10,15,22,30,38,42,46,50,55,62,72,78,75,65,45,20]),
+  V("Harrington's",        'irish','fidi',   0.612,0.428,"FiDi · Lunch crowd & after-work",['nfl'],0,        [2,2,2,2,2,2,3,8,25,45,62,68,65,55,38,30,25,18,12,8,5,3,2,2]),
+  V("The Blarney Stone",   'irish','soma',   0.532,0.535,"SoMa · No-frills Irish pub",['nfl'],0,             [3,2,2,2,2,3,4,5,8,12,18,25,32,38,45,52,58,65,72,75,70,60,42,18]),
+  // ── DIVE BARS ────────────────────────────────────────────────────────────
+  V("The Uptown",          'dive','mission', 0.436,0.612,"Mission · Pool tables, cheap pours",[],5,          [3,2,2,2,2,3,4,5,6,10,14,18,22,26,30,35,40,50,62,72,78,80,70,45]),
+  V("Hi Dive",             'dive','dog',     0.596,0.672,"Dogpatch · Waterfront, live music",['mlb'],15,     [2,2,2,2,2,2,3,4,5,8,12,16,20,24,28,32,38,48,60,68,72,65,48,22]),
+  V("Tempest",             'dive','soma',    0.548,0.538,"SoMa · Classic dive, cheap beer",[],0,             [3,2,2,2,2,3,4,5,8,12,18,25,32,38,42,48,52,58,65,70,72,65,45,20]),
+  V("The Royal Cuckoo",    'dive','mission', 0.428,0.568,"Mission · Organ music, vintage vibe",[],0,         [2,2,2,2,2,2,3,4,5,8,12,18,25,32,40,48,55,62,70,75,72,60,40,15]),
+  V("Noc Noc",             'dive','haight',  0.328,0.505,"Haight · Art bar, weird & wonderful",[],0,         [2,2,2,2,2,2,3,4,5,8,12,18,25,32,40,48,55,62,70,75,72,60,40,15]),
+  V("Toronado",            'dive','haight',  0.318,0.500,"Haight · Legendary beer selection",[],0,           [2,2,2,2,2,2,3,4,5,8,12,18,28,38,48,58,62,65,70,75,72,62,42,18]),
+  V("Ha-Ra Club",          'dive','tender',  0.512,0.452,"Tenderloin · No-frills dive since 1960",[],0,      [5,4,3,3,3,4,5,6,8,10,15,22,30,38,45,52,55,58,62,65,60,50,35,18]),
+  V("Aunt Charlie's",      'dive','tender',  0.508,0.448,"Tenderloin · Drag shows & dancing",[],0,           [3,2,2,2,2,3,4,5,6,8,12,15,18,22,28,35,42,52,65,75,78,72,55,30]),
+  V("SF Eagle",            'dive','soma',    0.558,0.545,"SoMa · Leather bar, beer bust Sundays",[],15,      [2,2,2,2,2,2,3,4,5,8,12,15,18,22,28,38,48,58,65,72,70,60,42,18]),
+  V("Homestead",           'dive','mission', 0.438,0.602,"Mission · Pool, shuffleboard, no BS",[],0,         [3,2,2,2,2,3,4,5,6,10,14,18,22,26,30,35,40,50,62,72,78,80,70,45]),
+  V("The Knockout",        'dive','mission', 0.432,0.588,"Mission · DJs, dancing, cheap beer",[],0,          [2,2,2,2,2,2,3,4,5,8,12,15,18,22,28,35,42,52,65,75,80,75,58,32]),
+  V("Virgil's Sea Room",   'dive','mission', 0.420,0.578,"Mission · Dive bar + live music",[],0,             [2,2,2,2,2,2,3,4,5,8,12,15,20,28,38,48,55,62,70,75,72,62,45,20]),
+  // ── COCKTAIL LOUNGES ─────────────────────────────────────────────────────
+  V("Smuggler's Cove",     'cock','haight',  0.322,0.506,"Haight · 550+ rums, world-class tiki",[],0,       [...EC,0,0,0,5,12,18,22,28,32,40,58,72,82,85,78,50]),
+  V("Pagan Idol",          'cock','fidi',    0.526,0.442,"FiDi · Elaborate tiki experience",[],0,            [...EC,0,5,10,15,22,28,32,35,38,48,65,78,82,80,65,35]),
+  V("Elixir",              'cock','mission', 0.406,0.552,"Mission · SF oldest craft cocktail bar",[],0,      [...EC,0,5,12,20,30,38,42,48,52,58,68,75,80,78,65,38]),
+  V("ABV",                 'cock','mission', 0.414,0.558,"Mission · Acclaimed cocktail bar",[],0,            [...EC,0,0,8,18,28,38,45,50,55,62,70,75,72,60,38,15]),
+  V("Bar Agricole",        'cock','soma',    0.544,0.525,"SoMa · Farm-to-glass cocktails",[],0,              [...EC,0,0,5,12,22,35,45,50,52,58,65,70,65,45,18,5]),
+  V("Trick Dog",           'cock','mission', 0.416,0.562,"Mission · Inventive menu, great vibes",[],0,       [...EC,0,0,8,18,28,40,48,55,60,65,72,75,70,52,25,8]),
+  V("Blackbird",           'cock','castro',  0.360,0.562,"Castro · Neighborhood cocktail spot",[],0,         [...EC,0,0,5,12,20,30,40,48,52,58,65,68,60,42,18,5]),
+  V("True Laurel",         'cock','mission', 0.402,0.548,"Mission · Acclaimed, plant-forward menu",[],0,     [...EC,0,0,5,12,22,32,42,48,52,58,65,70,65,48,22,5]),
+  V("Wildhawk",            'cock','mission', 0.412,0.555,"Mission · Seasonal craft cocktails",[],0,          [...EC,0,0,5,12,22,32,42,48,52,55,62,68,65,45,20,5]),
+  V("Local Edition",       'cock','soma',    0.538,0.518,"SoMa · Underground speakeasy vibes",[],0,          [...EC,0,0,5,10,18,28,38,45,50,58,68,75,78,70,48,20]),
+  V("The Interval",        'cock','marina',  0.358,0.202,"Fort Mason · Bar at end of time",[],0,             [...EC,0,0,5,12,22,32,42,48,52,58,62,65,58,38,15,3]),
+  V("Horsefeather",        'cock','richmond',0.225,0.318,"Inner Richmond · Serious cocktails",[],0,          [...EC,0,0,5,12,20,30,40,48,52,55,62,65,58,38,15,5]),
 ];
 
 const HAPPY_VENUES=[
@@ -379,6 +428,18 @@ const HOLIDAY_PROFILES={
 let hour=currentHour,selectedVenue=null,hoverVenue=null,playing=false,playInt=null;
 // Multi-select category visibility — starts with all on
 const visibleCats=new Set(['pizza','mex','irish','dive','cock','happy','muni']);
+// Zoom/pan state
+let zoom=1, panX=0, panY=0;
+let isPanning=false, lastPanX=0, lastPanY=0, pinchDist0=0;
+const MIN_ZOOM=1, MAX_ZOOM=8;
+function wpx(rx,ry){ return [(rx*W+panX)*zoom, (ry*H+panY)*zoom]; }
+function screenToMap(sx,sy){ return [(sx/zoom-panX)/W, (sy/zoom-panY)/H]; }
+function clampPan(){
+  const maxPX=0, minPX=W*(1-zoom);
+  const maxPY=0, minPY=H*(1-zoom);
+  panX=Math.min(maxPX,Math.max(minPX,panX));
+  panY=Math.min(maxPY,Math.max(minPY,panY));
+}
 let weather={temp:62,condition:'Partly cloudy',isRaining:false,rainIntensity:0,source:'mock'};
 let games=[],holidays=[],sunsetHour=20,sunriseHour=6;
 let apiStatus={weather:'mock',sports:'loading',holidays:'loading',sunrise:'loading',muni:'mock'};
@@ -704,6 +765,10 @@ function drawMapBase(){
 }
 
 function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.scale(zoom,zoom);
+  ctx.translate(panX,panY);
   drawMapBase();
 
   const visN=NEIGHBORHOODS.filter(n=>{
@@ -725,19 +790,36 @@ function draw(){
     MUNI_STOPS.forEach(s=>{
       const[cx,cy]=px(s.cx,s.cy);const running=muniRunning(hour,s);
       const isHov=hoverVenue&&hoverVenue._type==='muni'&&hoverVenue.name===s.name;
-      ctx.beginPath();ctx.arc(cx,cy,isHov?6:4,0,Math.PI*2);ctx.fillStyle=running?'#f97316':'#3a2a1a';ctx.fill();
-      ctx.beginPath();ctx.arc(cx,cy,isHov?7:5,0,Math.PI*2);ctx.strokeStyle=running?'rgba(249,115,22,0.5)':'rgba(58,42,26,0.3)';ctx.lineWidth=1.5;ctx.stroke();
-      if(running){ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.strokeStyle='rgba(249,115,22,0.18)';ctx.lineWidth=2;ctx.stroke();}
+      // Pick color from first line listed; multi-line trunk gets white
+      const lineKeys=s.line.split('/');
+      const col=lineKeys.length>2?'#b0c4de':(MUNI_LINES[lineKeys[0]]?.color||'#f97316');
+      const dimCol=running?col:'#2a2a2a';
+      const glowCol=running?col+'44':'transparent';
+      if(running){ctx.beginPath();ctx.arc(cx,cy,(isHov?9:7),0,Math.PI*2);ctx.fillStyle=glowCol;ctx.fill();}
+      ctx.beginPath();ctx.arc(cx,cy,isHov?6:4,0,Math.PI*2);
+      ctx.fillStyle=running?'#fff':'#333';ctx.fill();
+      ctx.strokeStyle=dimCol;ctx.lineWidth=running?2:1;ctx.beginPath();ctx.arc(cx,cy,isHov?6:4,0,Math.PI*2);ctx.stroke();
+      // Line color ring
+      ctx.beginPath();ctx.arc(cx,cy,isHov?5:3,0,Math.PI*2);
+      ctx.fillStyle=running?col:'#444';ctx.fill();
     });
   }
 
   getVisibleVenues().forEach(v=>{
     if(v.cat==='happy')return; // drawn separately as $ symbols below
     const d=liveValue(v);const cat=CATEGORIES.find(c=>c.id===v.cat);
-    const[cx,cy]=px(v.cx,v.cy);const isH=hoverVenue===v,isS=selectedVenue===v;const r=isH||isS?7:5;
-    ctx.beginPath();ctx.arc(cx,cy,r+2,0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fill();
+    const[cx,cy]=px(v.cx,v.cy);const isH=hoverVenue===v,isS=selectedVenue===v;
+    const r=Math.max(3,(isH||isS?7:5)/Math.sqrt(zoom));
+    ctx.beginPath();ctx.arc(cx,cy,r+1.5,0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fill();
     ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=cat.color;ctx.fill();
-    if(isH||isS){ctx.beginPath();ctx.arc(cx,cy,r+3,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.5;ctx.stroke();}
+    if(isH||isS){ctx.beginPath();ctx.arc(cx,cy,r+2,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.5/zoom;ctx.stroke();}
+    // Show name label when zoomed in enough
+    if(zoom>=2.5){
+      ctx.font=`${Math.max(7,9/zoom)}px sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillStyle='rgba(255,255,255,0.85)';
+      ctx.fillText(v.name,cx,cy+r+1.5);
+    }
   });
 
   if(visibleCats.has('happy')){
@@ -745,11 +827,21 @@ function draw(){
       const[cx,cy]=px(v.cx,v.cy);const state=happyState(hour,v);const br=happyBr(hour,v);
       const isH=hoverVenue===v,isS=selectedVenue===v;const active=state!=='off';
       if(active){ctx.beginPath();ctx.arc(cx,cy,10,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.12*br})`;ctx.fill();ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.22*br})`;ctx.fill();}
-      ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.font=`bold ${Math.max(9,11/zoom)}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillStyle=active?`rgba(${state==='ending'?'250,204,21':'255,220,50'},${br})`:'rgba(80,60,20,0.7)';
       ctx.fillText('$',cx,cy);
       if(isH||isS){ctx.beginPath();ctx.arc(cx,cy,9,0,Math.PI*2);ctx.strokeStyle=active?'rgba(250,204,21,0.8)':'rgba(80,60,20,0.5)';ctx.lineWidth=1.5;ctx.stroke();}
     });
+  }
+
+  // Zoom indicator
+  if(zoom>1.05){
+    ctx.restore();
+    ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(W-52,H-26,50,20);
+    ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(`${zoom.toFixed(1)}×`,W-27,H-16);
+  } else {
+    ctx.restore();
   }
 }
 
@@ -856,14 +948,18 @@ function buildCats(){
   });
 }
 
-function hitTest(mx,my){
-  let best=null,bestD=16;
-  if(visibleCats.has('muni'))MUNI_STOPS.forEach(s=>{const[cx,cy]=px(s.cx,s.cy);const d=Math.hypot(mx-cx,my-cy);if(d<bestD){bestD=d;best={...s,_type:'muni'};}});
-  getVisibleVenues().forEach(v=>{const[cx,cy]=px(v.cx,v.cy);const d=Math.hypot(mx-cx,my-cy);if(d<bestD){bestD=d;best=v;}});
+function hitTest(sx,sy){
+  // Convert screen coords → map coords accounting for zoom/pan
+  const[mx,my]=screenToMap(sx,sy);
+  const threshold=18/Math.max(1,zoom); // tighter at zoom
+  let best=null,bestD=threshold;
+  if(visibleCats.has('muni'))MUNI_STOPS.forEach(s=>{const d=Math.hypot(mx-s.cx,my-s.cy)*W;if(d<bestD){bestD=d;best={...s,_type:'muni'};}});
+  getVisibleVenues().forEach(v=>{const d=Math.hypot(mx-v.cx,my-v.cy)*W;if(d<bestD){bestD=d;best=v;}});
   return best;
 }
 
 canvas.addEventListener('mousemove',e=>{
+  if(isPanning)return;
   const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
   const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sx;
   hoverVenue=hitTest(mx,my);
@@ -888,7 +984,80 @@ canvas.addEventListener('mousemove',e=>{
 
 canvas.addEventListener('click',e=>{if(hoverVenue){selectedVenue=hoverVenue;updateVenuePanel();draw();}});
 canvas.addEventListener('mouseleave',()=>{hoverVenue=null;document.getElementById('tooltip').style.display='none';draw();});
-canvas.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];const rect=canvas.getBoundingClientRect();const sx=W/rect.width;const mx=(t.clientX-rect.left)*sx,my=(t.clientY-rect.top)*sx;hoverVenue=hitTest(mx,my);if(hoverVenue){selectedVenue=hoverVenue;updateVenuePanel();}draw();},{passive:false});
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(e.touches.length===2){
+    pinchDist0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    return;
+  }
+  const t=e.touches[0];const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+  const mx=(t.clientX-rect.left)*sx,my=(t.clientY-rect.top)*sx;
+  lastPanX=mx;lastPanY=my;
+  hoverVenue=hitTest(mx,my);
+},{passive:false});
+
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===2){
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+    const cx=((e.touches[0].clientX+e.touches[1].clientX)/2-rect.left)*sx;
+    const cy=((e.touches[0].clientY+e.touches[1].clientY)/2-rect.top)*sx;
+    const ratio=d/pinchDist0;
+    const newZoom=Math.min(MAX_ZOOM,Math.max(MIN_ZOOM,zoom*ratio));
+    panX=cx/newZoom-cx/zoom+panX*(zoom/newZoom);
+    panY=cy/newZoom-cy/zoom+panY*(zoom/newZoom);
+    zoom=newZoom;pinchDist0=d;clampPan();draw();return;
+  }
+  const t=e.touches[0];const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+  const mx=(t.clientX-rect.left)*sx,my=(t.clientY-rect.top)*sx;
+  if(zoom>1){
+    panX+=( mx-lastPanX)/zoom;panY+=(my-lastPanY)/zoom;clampPan();draw();
+  }
+  lastPanX=mx;lastPanY=my;
+},{passive:false});
+
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  if(e.changedTouches.length===1&&e.touches.length===0){
+    const t=e.changedTouches[0];const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+    const mx=(t.clientX-rect.left)*sx,my=(t.clientY-rect.top)*sx;
+    const v=hitTest(mx,my);
+    if(v){selectedVenue=v;updateVenuePanel();draw();}
+  }
+},{passive:false});
+
+// Mouse wheel zoom
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+  const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sx;
+  const delta=e.deltaY>0?0.85:1.18;
+  const newZoom=Math.min(MAX_ZOOM,Math.max(MIN_ZOOM,zoom*delta));
+  panX=mx/newZoom-mx/zoom+panX*(zoom/newZoom);
+  panY=my/newZoom-my/zoom+panY*(zoom/newZoom);
+  zoom=newZoom;clampPan();draw();
+},{passive:false});
+
+// Mouse drag pan
+canvas.addEventListener('mousedown',e=>{if(zoom>1){isPanning=true;lastPanX=(e.clientX-canvas.getBoundingClientRect().left)*(W/canvas.getBoundingClientRect().width);lastPanY=(e.clientY-canvas.getBoundingClientRect().top)*(H/canvas.getBoundingClientRect().height);}});
+window.addEventListener('mousemove',e=>{
+  if(!isPanning)return;
+  const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+  const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sx;
+  panX+=(mx-lastPanX)/zoom;panY+=(my-lastPanY)/zoom;lastPanX=mx;lastPanY=my;clampPan();draw();
+});
+window.addEventListener('mouseup',()=>{isPanning=false;});
+
+// Double-tap/click to zoom in
+let lastClick=0;
+canvas.addEventListener('dblclick',e=>{
+  const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+  const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sx;
+  if(zoom>=MAX_ZOOM-0.1){zoom=1;panX=0;panY=0;}
+  else{const newZoom=Math.min(MAX_ZOOM,zoom*2);panX=mx/newZoom-mx/zoom+panX*(zoom/newZoom);panY=my/newZoom-my/zoom+panY*(zoom/newZoom);zoom=newZoom;}
+  clampPan();draw();
+});
 function syncTime(slot){
   minute=slotToMinutes(slot);
   hour=Math.floor(minute/60)%24;
