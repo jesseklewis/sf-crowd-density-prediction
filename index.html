@@ -51,6 +51,14 @@
     #tooltip { position: absolute; background: rgba(0,0,0,0.88); border-radius: var(--radius-md); padding: 7px 11px; color: #fff; font-size: 11px; pointer-events: none; display: none; white-space: nowrap; line-height: 1.55; z-index: 10; max-width: 220px; }
 
     /* TIME SCRUBBER — directly under map */
+    /* Zoom bar */
+    #zoom-bar { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--color-surface); border-top: 0.5px solid var(--color-border); }
+    #zoom-bar button { width: 30px; height: 30px; border-radius: 50%; border: 0.5px solid var(--color-border2); background: var(--color-surface2); color: var(--color-text); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; line-height: 1; user-select: none; }
+    #zoom-bar button:active { background: rgba(255,255,255,0.12); }
+    #zoom-reset { font-size: 13px !important; color: var(--color-text2) !important; }
+    #zoom-range { flex: 1; accent-color: #3b82f6; height: 4px; cursor: pointer; touch-action: none; }
+    #zoom-label { font-size: 11px; color: var(--color-text3); min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
+    #pinch-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.75); color: #fff; font-size: 13px; padding: 10px 18px; border-radius: 99px; pointer-events: none; opacity: 0; transition: opacity 0.3s; white-space: nowrap; z-index: 20; }
     .time-section { background: var(--color-surface); border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 10px 14px 12px; margin-bottom: 12px; }
     .time-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
     .time-display-inline { font-size: 15px; font-weight: 500; color: var(--color-text); }
@@ -146,9 +154,16 @@
     </div>
 
     <div id="tooltip"></div>
+    <div id="pinch-hint">🤏 Pinch to zoom</div>
   </div>
 
-  <div class="time-section">
+  <div id="zoom-bar">
+    <button id="zoom-out" aria-label="Zoom out">−</button>
+    <input type="range" id="zoom-range" min="0" max="100" value="0" step="1" aria-label="Zoom level">
+    <button id="zoom-in" aria-label="Zoom in">+</button>
+    <button id="zoom-reset" aria-label="Reset zoom" title="Reset zoom">⊙</button>
+    <span id="zoom-label">1×</span>
+  </div>
     <div class="time-header">
       <div>
         <div class="time-display-inline" id="time-display-main">--</div>
@@ -870,7 +885,48 @@ function liveValue(venue) {
   return Math.round(getCurveValue(curve, minute));
 }
 
-// ── USER LOCATION ─────────────────────────────────────────────────────────────
+// ── ZOOM SLIDER SYNC ─────────────────────────────────────────────────────────
+// Slider is 0-100, zoom is MIN_ZOOM-MAX_ZOOM on a log scale for natural feel
+function zoomToSlider(z){ return Math.round((Math.log(z)-Math.log(MIN_ZOOM))/(Math.log(MAX_ZOOM)-Math.log(MIN_ZOOM))*100); }
+function sliderToZoom(s){ return MIN_ZOOM*Math.pow(MAX_ZOOM/MIN_ZOOM,s/100); }
+
+function syncZoomUI(){
+  const s=zoomToSlider(zoom);
+  const slider=document.getElementById('zoom-range');
+  const label=document.getElementById('zoom-label');
+  if(slider)slider.value=s;
+  if(label)label.textContent=zoom<=1.05?'1×':(zoom<10?zoom.toFixed(1)+'×':Math.round(zoom)+'×');
+}
+
+function applyZoom(newZoom, cx, cy){
+  // cx, cy = canvas logical coords to zoom around (defaults to center)
+  const cxP = cx ?? W/2, cyP = cy ?? H/2;
+  newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
+  panX = cxP/newZoom - cxP/zoom + panX*(zoom/newZoom);
+  panY = cyP/newZoom - cyP/zoom + panY*(zoom/newZoom);
+  zoom = newZoom;
+  clampPan(); syncZoomUI(); draw();
+}
+
+function resetZoom(){
+  zoom=1; panX=0; panY=0; syncZoomUI(); draw();
+}
+
+// Pinch hint — show briefly on first two-finger touch, then dismiss
+let pinchHintShown=false, pinchHintTimer=null;
+function showPinchHint(){
+  if(pinchHintShown)return;
+  pinchHintShown=true;
+  const h=document.getElementById('pinch-hint');
+  if(!h)return;
+  h.style.opacity='1';
+  clearTimeout(pinchHintTimer);
+  pinchHintTimer=setTimeout(()=>{ h.style.opacity='0'; },1800);
+}
+function hidePinchHint(){
+  const h=document.getElementById('pinch-hint');
+  if(h)h.style.opacity='0';
+}
 // SF map bounds (approximate, matching the canvas coordinate system)
 const SF_BOUNDS = { latMin:37.706, latMax:37.814, lngMin:-122.525, lngMax:-122.352 };
 let userLoc = null; // {rx, ry, accuracy} or null
@@ -1566,12 +1622,13 @@ function draw(){
   // User location dot (drawn last so it's always on top)
   drawUserLocation();
 
-  // Zoom indicator
+  // Zoom indicator — small pill bottom-right
   if(zoom>1.05){
     ctx.restore();
-    ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(W-52,H-26,50,20);
+    const label=`${zoom<10?zoom.toFixed(1):Math.round(zoom)}×`;
+    ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(W-46,H-24,44,18);
     ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(`${zoom.toFixed(1)}×`,W-27,H-16);
+    ctx.fillText(label,W-24,H-15);
   } else {
     ctx.restore();
   }
@@ -1712,12 +1769,15 @@ canvas.addEventListener('touchstart',e=>{
   e.preventDefault();
   if(e.touches.length===2){
     pinchDist0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    hidePinchHint();
     return;
   }
-  const t=e.touches[0];const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
-  const mx=(t.clientX-rect.left)*sx,my=(t.clientY-rect.top)*sx;
-  lastPanX=mx;lastPanY=my;
-  hoverVenue=hitTest(mx,my);
+  if(e.touches.length===1){
+    const t=e.touches[0];const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+    const mx=(t.clientX-rect.left)*sx,my=(t.clientY-rect.top)*sx;
+    lastPanX=mx;lastPanY=my;
+    hoverVenue=hitTest(mx,my);
+  }
 },{passive:false});
 
 canvas.addEventListener('touchmove',e=>{
@@ -1725,24 +1785,29 @@ canvas.addEventListener('touchmove',e=>{
   if(e.touches.length===2){
     const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
     const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+    // Pinch center in canvas coords
     const cx=((e.touches[0].clientX+e.touches[1].clientX)/2-rect.left)*sx;
     const cy=((e.touches[0].clientY+e.touches[1].clientY)/2-rect.top)*sx;
-    const ratio=d/pinchDist0;
-    const newZoom=Math.min(MAX_ZOOM,Math.max(MIN_ZOOM,zoom*ratio));
-    panX=cx/newZoom-cx/zoom+panX*(zoom/newZoom);
-    panY=cy/newZoom-cy/zoom+panY*(zoom/newZoom);
-    zoom=newZoom;pinchDist0=d;clampPan();draw();return;
+    if(pinchDist0>0){
+      const ratio=d/pinchDist0;
+      applyZoom(zoom*ratio,cx,cy);
+    }
+    pinchDist0=d;
+    return;
   }
-  const t=e.touches[0];const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
-  const mx=(t.clientX-rect.left)*sx,my=(t.clientY-rect.top)*sx;
-  if(zoom>1){
-    panX+=( mx-lastPanX)/zoom;panY+=(my-lastPanY)/zoom;clampPan();draw();
+  if(e.touches.length===1){
+    const t=e.touches[0];const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
+    const mx=(t.clientX-rect.left)*sx,my=(t.clientY-rect.top)*sx;
+    if(zoom>1){
+      panX+=(mx-lastPanX)/zoom;panY+=(my-lastPanY)/zoom;clampPan();syncZoomUI();draw();
+    }
+    lastPanX=mx;lastPanY=my;
   }
-  lastPanX=mx;lastPanY=my;
 },{passive:false});
 
 canvas.addEventListener('touchend',e=>{
   e.preventDefault();
+  pinchDist0=0;
   if(e.changedTouches.length===1&&e.touches.length===0){
     const t=e.changedTouches[0];const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
     const mx=(t.clientX-rect.left)*sx,my=(t.clientY-rect.top)*sx;
@@ -1757,31 +1822,39 @@ canvas.addEventListener('wheel',e=>{
   const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
   const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sx;
   const delta=e.deltaY>0?0.85:1.18;
-  const newZoom=Math.min(MAX_ZOOM,Math.max(MIN_ZOOM,zoom*delta));
-  panX=mx/newZoom-mx/zoom+panX*(zoom/newZoom);
-  panY=my/newZoom-my/zoom+panY*(zoom/newZoom);
-  zoom=newZoom;clampPan();draw();
+  applyZoom(zoom*delta,mx,my);
 },{passive:false});
 
 // Mouse drag pan
-canvas.addEventListener('mousedown',e=>{if(zoom>1){isPanning=true;lastPanX=(e.clientX-canvas.getBoundingClientRect().left)*(W/canvas.getBoundingClientRect().width);lastPanY=(e.clientY-canvas.getBoundingClientRect().top)*(H/canvas.getBoundingClientRect().height);}});
+canvas.addEventListener('mousedown',e=>{
+  if(zoom>1){isPanning=true;const rect=canvas.getBoundingClientRect();const sx=W/rect.width;lastPanX=(e.clientX-rect.left)*sx;lastPanY=(e.clientY-rect.top)*sx;canvas.style.cursor='grabbing';}
+});
 window.addEventListener('mousemove',e=>{
   if(!isPanning)return;
   const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
   const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sx;
-  panX+=(mx-lastPanX)/zoom;panY+=(my-lastPanY)/zoom;lastPanX=mx;lastPanY=my;clampPan();draw();
+  panX+=(mx-lastPanX)/zoom;panY+=(my-lastPanY)/zoom;lastPanX=mx;lastPanY=my;clampPan();syncZoomUI();draw();
 });
-window.addEventListener('mouseup',()=>{isPanning=false;});
+window.addEventListener('mouseup',()=>{isPanning=false;canvas.style.cursor='';});
 
-// Double-tap/click to zoom in
-let lastClick=0;
+// Double-click to zoom in/out
 canvas.addEventListener('dblclick',e=>{
   const rect=canvas.getBoundingClientRect();const sx=W/rect.width;
   const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sx;
-  if(zoom>=MAX_ZOOM-0.1){zoom=1;panX=0;panY=0;}
-  else{const newZoom=Math.min(MAX_ZOOM,zoom*2);panX=mx/newZoom-mx/zoom+panX*(zoom/newZoom);panY=my/newZoom-my/zoom+panY*(zoom/newZoom);zoom=newZoom;}
-  clampPan();draw();
+  if(zoom>=MAX_ZOOM-0.1) resetZoom();
+  else applyZoom(Math.min(MAX_ZOOM,zoom*2.5),mx,my);
 });
+
+// Zoom slider
+document.getElementById('zoom-range').addEventListener('input',e=>{
+  const newZoom=sliderToZoom(+e.target.value);
+  applyZoom(newZoom,W/2,H/2);
+});
+
+// Zoom buttons
+document.getElementById('zoom-in').addEventListener('click',()=>applyZoom(zoom*1.6,W/2,H/2));
+document.getElementById('zoom-out').addEventListener('click',()=>applyZoom(zoom/1.6,W/2,H/2));
+document.getElementById('zoom-reset').addEventListener('click',resetZoom);
 function getPageBg(min) {
   // Subtle page bg shift matching muted sky tones
   if(min<360||min>1320) return '#060810';   // night
@@ -1822,10 +1895,11 @@ document.getElementById('loc-btn').addEventListener('click', () => {
     requestLocation();
   } else if (locStatus === 'active' && userLoc) {
     // Re-center map on user location
-    zoom = Math.max(zoom, 3);
+    const targetZoom = Math.max(zoom, 4);
+    zoom = targetZoom;
     panX = W/2/zoom - userLoc.rx * W;
     panY = H/2/zoom - userLoc.ry * H;
-    clampPan(); draw();
+    clampPan(); syncZoomUI(); draw();
   }
 });
 
@@ -1840,6 +1914,7 @@ function animatePulse() {
 let pulseInterval = setInterval(animatePulse, 33);
 buildCats();
 updateLocBadge();
+syncZoomUI();
 games=mockGames();
 hour=currentHour;
 minute=currentHour*60+now.getMinutes();
