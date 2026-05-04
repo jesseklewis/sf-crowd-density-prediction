@@ -170,6 +170,9 @@
         <button id="play-btn">&#9654;</button>
       </div>
     </div>
+    <div style="margin-bottom:8px">
+      <button id="loc-btn" style="font-size:11px;padding:5px 12px;border-radius:99px;border:0.5px solid var(--color-border2);background:var(--color-surface);color:var(--color-text2);cursor:pointer;-webkit-tap-highlight-color:transparent">📍 Show my location</button>
+    </div>
     <div class="time-track">
       <input type="range" id="time-range" min="0" max="239" value="0" step="1">
     </div>
@@ -876,8 +879,93 @@ function liveValue(venue) {
   return Math.round(getCurveValue(curve, minute));
 }
 
-// ── MOCK FALLBACKS
-const mockWeather=()=>({temp:62,condition:'Partly cloudy (mock)',isRaining:now.getDay()===0,rainIntensity:0.5,source:'mock'});
+// ── USER LOCATION ─────────────────────────────────────────────────────────────
+// SF map bounds (approximate, matching the canvas coordinate system)
+const SF_BOUNDS = { latMin:37.706, latMax:37.814, lngMin:-122.525, lngMax:-122.352 };
+let userLoc = null; // {rx, ry, accuracy} or null
+let locStatus = 'idle'; // idle | loading | active | denied | outside
+
+function latlngToRxy(lat, lng) {
+  const rx = (lng - SF_BOUNDS.lngMin) / (SF_BOUNDS.lngMax - SF_BOUNDS.lngMin);
+  const ry = 1 - (lat - SF_BOUNDS.latMin) / (SF_BOUNDS.latMax - SF_BOUNDS.latMin);
+  return { rx, ry };
+}
+
+function requestLocation() {
+  if (!navigator.geolocation) { locStatus='denied'; updateLocBadge(); return; }
+  locStatus = 'loading'; updateLocBadge();
+  navigator.geolocation.watchPosition(
+    pos => {
+      const {latitude:lat, longitude:lng, accuracy} = pos.coords;
+      const {rx, ry} = latlngToRxy(lat, lng);
+      if (rx < -0.05 || rx > 1.05 || ry < -0.05 || ry > 1.05) {
+        locStatus = 'outside'; userLoc = null;
+      } else {
+        userLoc = { rx: Math.max(0,Math.min(1,rx)), ry: Math.max(0,Math.min(1,ry)), accuracy };
+        locStatus = 'active';
+      }
+      updateLocBadge(); draw();
+    },
+    err => {
+      locStatus = err.code === 1 ? 'denied' : 'error';
+      updateLocBadge();
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+  );
+}
+
+function updateLocBadge() {
+  const btn = document.getElementById('loc-btn');
+  if (!btn) return;
+  const labels = { idle:'📍 Show my location', loading:'📍 Locating…', active:'📍 You are here', denied:'📍 Location denied', outside:'📍 Outside SF', error:'📍 Location error' };
+  btn.textContent = labels[locStatus] || '📍 My location';
+  btn.style.opacity = locStatus === 'active' ? '1' : '0.7';
+  btn.style.color = locStatus === 'active' ? '#60a5fa' : '';
+}
+
+let locPulse = 0; // animation frame counter for pulsing dot
+function drawUserLocation() {
+  if (!userLoc || locStatus !== 'active') return;
+  const [cx, cy] = px(userLoc.rx, userLoc.ry);
+  locPulse = (locPulse + 0.06) % (Math.PI * 2);
+  const pulse = 0.5 + 0.5 * Math.sin(locPulse);
+
+  // Accuracy ring (scaled by zoom)
+  const accPx = (userLoc.accuracy / 111000) * W / (SF_BOUNDS.lngMax - SF_BOUNDS.lngMin);
+  if (accPx > 4 && accPx < 120) {
+    ctx.beginPath(); ctx.arc(cx, cy, accPx, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(96,165,250,${0.15 + pulse * 0.08})`;
+    ctx.lineWidth = 1 / zoom; ctx.stroke();
+    ctx.fillStyle = `rgba(96,165,250,${0.04 + pulse * 0.03})`;
+    ctx.fill();
+  }
+
+  // Outer pulse ring
+  const pulseR = (7 + pulse * 6) / Math.sqrt(zoom);
+  ctx.beginPath(); ctx.arc(cx, cy, pulseR, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(96,165,250,${0.3 * (1 - pulse * 0.5)})`;
+  ctx.lineWidth = 1.5 / zoom; ctx.stroke();
+
+  // White shadow
+  ctx.beginPath(); ctx.arc(cx, cy, 7 / Math.sqrt(zoom), 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+
+  // Blue dot
+  ctx.beginPath(); ctx.arc(cx, cy, 5 / Math.sqrt(zoom), 0, Math.PI * 2);
+  ctx.fillStyle = '#3b82f6'; ctx.fill();
+
+  // Center highlight
+  ctx.beginPath(); ctx.arc(cx - 1.5/zoom, cy - 1.5/zoom, 1.8/Math.sqrt(zoom), 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fill();
+
+  // "You are here" label when zoomed in
+  if (zoom >= 2) {
+    ctx.font = `bold ${Math.max(8, 10/zoom)}px sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillText('You are here', cx, cy - 9/Math.sqrt(zoom));
+  }
+}
 const mockGames=()=>{const day=now.getDay(),g=[];if(day===0)g.push({league:'nfl',teams:'49ers vs Rams',time:'1:05 PM',boostMagnitude:0.35,gameHour:13});if(day===1)g.push({league:'nba',teams:'Warriors vs Lakers',time:'7:30 PM',boostMagnitude:0.28,gameHour:19});if(day===3||day===5)g.push({league:'mlb',teams:'Giants vs Dodgers',time:'6:45 PM',boostMagnitude:0.22,gameHour:18});return g;};
 
 // ── LIVE: Sunrise-Sunset (no key)
@@ -1419,6 +1507,9 @@ function draw(){
     });
   }
 
+  // User location dot (drawn last so it's always on top)
+  drawUserLocation();
+
   // Zoom indicator
   if(zoom>1.05){
     ctx.restore();
@@ -1663,8 +1754,26 @@ document.getElementById('play-btn').addEventListener('click',()=>{
   else clearInterval(playInt);
 });
 
-// Boot
-buildCats();
+// Location button
+document.getElementById('loc-btn').addEventListener('click', () => {
+  if (locStatus === 'idle' || locStatus === 'denied' || locStatus === 'outside' || locStatus === 'error') {
+    requestLocation();
+  } else if (locStatus === 'active' && userLoc) {
+    // Re-center map on user location
+    zoom = Math.max(zoom, 3);
+    panX = W/2/zoom - userLoc.rx * W;
+    panY = H/2/zoom - userLoc.ry * H;
+    clampPan(); draw();
+  }
+});
+
+// Pulse animation loop — only runs when location is active
+function animatePulse() {
+  if (locStatus === 'active' && userLoc && !playing) {
+    draw();
+  }
+  requestAnimationFrame(animatePulse);
+}
 games=mockGames();
 hour=currentHour;
 minute=currentHour*60+now.getMinutes();
@@ -1681,6 +1790,7 @@ updateModifiers();
 Promise.all([fetchSunrise(),fetchGames(),fetchHolidays(),fetchWeather()]).then(()=>{
   updateWeatherBadge();updateModifiers();updateBanner();draw();
 });
+animatePulse();
 </script>
 </body>
 </html>
