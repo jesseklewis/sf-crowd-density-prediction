@@ -38,17 +38,16 @@
     #overlay-info { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.65); border-radius: var(--radius-md); padding: 6px 10px; color: #fff; pointer-events: none; }
     .time-big { font-size: 16px; font-weight: 500; }
     .time-sub { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 1px; }
-    #weather-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.65); border-radius: var(--radius-md); padding: 6px 10px; color: #fff; font-size: 11px; pointer-events: none; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+    #weather-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.65); border-radius: var(--radius-md); padding: 5px 8px; color: #fff; font-size: 10px; pointer-events: none; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; max-width: 48%; }
     #weather-badge .wtemp { font-size: 16px; font-weight: 500; }
     #weather-badge .wcond { font-size: 10px; color: rgba(255,255,255,0.5); }
-    #weather-badge .wextra { font-size: 9px; color: rgba(255,255,255,0.3); }
-    #legend { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); border-radius: var(--radius-md); padding: 5px 10px; color: #fff; font-size: 10px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-    #legend .grad { height: 5px; width: 72px; border-radius: 3px; background: linear-gradient(to right,#2563eb,#22c55e,#facc15,#f97316,#ef4444); }
-    #legend .lrow { display: flex; justify-content: space-between; width: 72px; color: rgba(255,255,255,0.45); font-size: 8px; margin-top: 2px; }
-    #legend .lgrad-wrap { display: flex; flex-direction: column; }
-    #legend .lsep { width: 0.5px; height: 22px; background: rgba(255,255,255,0.2); }
-    #legend .licons { display: flex; gap: 8px; }
-    #legend .li { display: flex; align-items: center; gap: 3px; color: rgba(255,255,255,0.55); font-size: 9px; }
+    #weather-badge .wextra { font-size: 9px; color: rgba(255,255,255,0.3); display: none; }
+    @media (min-width: 480px) { #weather-badge .wextra { display: block; } }
+    /* density legend — now inline in time-section */
+    .density-legend { display: flex; align-items: center; gap: 8px; font-size: 10px; color: rgba(255,255,255,0.5); }
+    .density-legend .grad { height: 4px; width: 64px; border-radius: 2px; background: linear-gradient(to right,#2563eb,#22c55e,#facc15,#f97316,#ef4444); }
+    .density-legend .dlrow { display: flex; justify-content: space-between; width: 64px; color: rgba(255,255,255,0.4); font-size: 9px; margin-top: 2px; }
+    .density-legend .dlwrap { display: flex; flex-direction: column; }
     #tooltip { position: absolute; background: rgba(0,0,0,0.88); border-radius: var(--radius-md); padding: 7px 11px; color: #fff; font-size: 11px; pointer-events: none; display: none; white-space: nowrap; line-height: 1.55; z-index: 10; max-width: 220px; }
 
     /* TIME SCRUBBER — directly under map */
@@ -65,7 +64,7 @@
     .controls { display: flex; flex-direction: column; gap: 12px; }
     .section-label { font-size: 10px; color: var(--color-text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
     .cat-row { display: flex; flex-wrap: wrap; gap: 6px; }
-    .cat-btn { display: flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 99px; font-size: 12px; border: 0.5px solid var(--color-border2); background: var(--color-surface); color: var(--color-text2); cursor: pointer; transition: background 0.15s; user-select: none; -webkit-tap-highlight-color: transparent; min-height: 36px; }
+    .cat-btn { display: flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 99px; font-size: 12px; border: 0.5px solid var(--color-border2); background: var(--color-surface); color: var(--color-text2); cursor: pointer; transition: background 0.15s; user-select: none; -webkit-tap-highlight-color: transparent; min-height: 44px; touch-action: manipulation; pointer-events: auto; }
     .cat-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .cat-btn.active { color: #fff; border-color: transparent; }
     .mod-row { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -145,17 +144,7 @@
       <div class="wcond" id="w-cond">Loading...</div>
       <div class="wextra" id="w-sunset"></div>
     </div>
-    <div id="legend">
-      <div class="lgrad-wrap">
-        <div class="grad"></div>
-        <div class="lrow"><span>Quiet</span><span>Packed</span></div>
-      </div>
-      <div class="lsep"></div>
-      <div class="licons">
-        <div class="li"><svg width="9" height="9"><circle cx="4.5" cy="4.5" r="3.5" fill="#f97316"/></svg>Muni</div>
 
-      </div>
-    </div>
     <div id="tooltip"></div>
   </div>
 
@@ -166,7 +155,9 @@
         <div class="time-date-inline" id="date-display-main">San Francisco</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:10px;color:var(--color-text3)">Pinch or scroll to zoom</span>
+        <div class="density-legend">
+          <div class="dlwrap"><div class="grad"></div><div class="dlrow"><span>Quiet</span><span>Packed</span></div></div>
+        </div>
         <button id="play-btn">&#9654;</button>
       </div>
     </div>
@@ -1840,11 +1831,13 @@ document.getElementById('loc-btn').addEventListener('click', () => {
 
 // Pulse animation loop — only runs when location is active
 function animatePulse() {
+  // Only animate when location is active and not playing (playing has its own interval)
   if (locStatus === 'active' && userLoc && !playing) {
     draw();
   }
-  requestAnimationFrame(animatePulse);
 }
+// Run pulse at 30fps only when needed — won't block touch events
+let pulseInterval = setInterval(animatePulse, 33);
 games=mockGames();
 hour=currentHour;
 minute=currentHour*60+now.getMinutes();
@@ -1861,7 +1854,7 @@ updateModifiers();
 Promise.all([fetchSunrise(),fetchGames(),fetchHolidays(),fetchWeather()]).then(()=>{
   updateWeatherBadge();updateModifiers();updateBanner();draw();
 });
-animatePulse();
+// pulse runs via setInterval defined above
 </script>
 </body>
 </html>
