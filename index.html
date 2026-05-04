@@ -55,20 +55,21 @@
     #map-row { display: flex; align-items: stretch; gap: 0; margin-bottom: 0; }
     #canvas-wrap { flex: 1; min-width: 0; border-radius: var(--radius-lg) 0 0 0; }
     /* Vertical zoom bar */
-    #zoom-bar { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; background: rgba(20,26,42,0.96); border-radius: 0 var(--radius-lg) 0 0; border-left: 1px solid rgba(255,255,255,0.15); width: 46px; flex-shrink: 0; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-    #zoom-bar button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.90); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; line-height: 1; user-select: none; transition: background 0.12s; }
-    #zoom-bar button:hover { background: rgba(255,255,255,0.18); }
-    #zoom-bar button:active { background: rgba(255,255,255,0.28); }
-    #zoom-reset { font-size: 12px !important; color: rgba(255,255,255,0.55) !important; border-color: rgba(255,255,255,0.12) !important; background: rgba(255,255,255,0.06) !important; }
-    #zoom-range { writing-mode: vertical-lr; direction: rtl; flex: 1; accent-color: #60a5fa; width: 4px; min-height: 80px; cursor: pointer; touch-action: none; appearance: slider-vertical; -webkit-appearance: slider-vertical; opacity: 1; }
-    #zoom-label { font-size: 9px; color: rgba(255,255,255,0.65); font-variant-numeric: tabular-nums; writing-mode: horizontal-tb; text-align: center; font-weight: 500; }
-    #dpad { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 2px; }
-    #dpad-row { display: flex; gap: 2px; }
-    .dpad-btn { width: 24px; height: 24px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.80); font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; line-height: 1; transition: background 0.1s; }
-    .dpad-btn:hover { background: rgba(255,255,255,0.18); }
-    .dpad-btn:active { background: rgba(255,255,255,0.30); }
+    #zoom-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0 10px; background: rgba(14,20,36,0.98); border-radius: 0 var(--radius-lg) var(--radius-lg) 0; border-left: 1px solid rgba(255,255,255,0.12); width: 50px; flex-shrink: 0; box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.06); }
+    #zoom-bar button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.88); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; line-height: 1; user-select: none; transition: background 0.1s, border-color 0.1s; }
+    #zoom-bar button:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.30); }
+    #zoom-bar button:active { background: rgba(96,165,250,0.30); border-color: #60a5fa; }
+    #zoom-reset { font-size: 13px !important; color: rgba(255,255,255,0.45) !important; border-color: rgba(255,255,255,0.10) !important; background: transparent !important; }
+    #zoom-reset:hover { color: rgba(255,255,255,0.80) !important; }
+    #zoom-range { writing-mode: vertical-lr; direction: rtl; flex: 1; accent-color: #3b82f6; width: 3px; min-height: 100px; cursor: pointer; touch-action: none; appearance: slider-vertical; -webkit-appearance: slider-vertical; }
+    #zoom-label { font-size: 9px; color: rgba(96,165,250,0.80); font-variant-numeric: tabular-nums; writing-mode: horizontal-tb; text-align: center; font-weight: 600; letter-spacing: 0.02em; }
+    #dpad { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 0 0; border-top: 0.5px solid rgba(255,255,255,0.08); width: 100%; }
+    #dpad-row { display: flex; gap: 1px; }
+    .dpad-btn { width: 22px; height: 22px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.70); font-size: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; line-height: 1; transition: background 0.1s; }
+    .dpad-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .dpad-btn:active { background: rgba(96,165,250,0.25); }
     #pinch-hint { position: absolute; top: 50%; left: 45%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.75); color: #fff; font-size: 13px; padding: 10px 18px; border-radius: 99px; pointer-events: none; opacity: 0; transition: opacity 0.3s; white-space: nowrap; z-index: 20; }
-    .time-section { background: var(--color-surface); border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 10px 14px 12px; margin-bottom: 12px; margin-right: 46px; }
+    .time-section { background: var(--color-surface); border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 10px 14px 12px; margin-bottom: 12px; margin-right: 50px; }
     .time-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
     .time-display-inline { font-size: 15px; font-weight: 500; color: var(--color-text); }
     .time-date-inline { font-size: 10px; color: var(--color-text3); }
@@ -323,6 +324,7 @@ const NEIGHBORHOODS=[
   {id:'sunset',   name:'Sunset',     cx:0.196,cy:0.588,curve:[2,1,1,1,1,2,3,6,12,22,35,48,58,65,65,62,60,65,75,82,72,55,32,12]},
   // Marina / Cow Hollow
   {id:'marina',   name:'Marina',     cx:0.378,cy:0.205,curve:[3,2,2,2,2,3,5,8,14,18,22,26,28,32,35,40,45,52,62,70,65,52,30,12]},
+  {id:'china',    name:'Chinatown',  cx:0.575,cy:0.352,curve:[4,3,2,2,2,3,5,10,25,42,55,62,65,68,65,60,55,48,45,40,30,18,10,6]},
   // Nob Hill
   {id:'nob',      name:'Nob Hill',   cx:0.498,cy:0.374,curve:[3,2,2,2,2,3,5,8,14,20,26,32,36,40,42,44,42,40,44,46,42,35,22,12]},
 ];
@@ -942,6 +944,187 @@ const EXTRA_VENUES = [
   V("The Interval (Fort Mason)",'bar','marina',0.358,0.200,"2 Marina · Cocktail bar at end of time",[],0,     BAR),
 ];
 
+
+const VENUES2 = [
+  // ── NOB HILL — deep cut restaurants & bars ──────────────────────────────
+  V("Tonga Room",          'bar','nob',     0.494,0.368,"950 Mason · Tiki bar in Fairmont, indoor rain",[],0, [...D,0,0,0,0,0,0,0,0,0,0,0,35,55,65,72,80,82,78,65,48,30,15]),
+  V("Top of the Mark",     'bar','nob',     0.496,0.365,"999 California · Panoramic hotel bar",[],0,          ALL),
+  V("Starlite at Beacon Grand",'bar','nob', 0.498,0.370,"21st floor · Cocktails, vinyl DJ sets",[],0,        BAR),
+  V("Key Klub",            'bar','nob',     0.500,0.372,"Lower Nob Hill · Natural wine, duck mousse toast",[],0,BAR),
+  V("Back to Back",        'bar','nob',     0.498,0.374,"Nob Hill · Wood-fired pizza & natural wine",[],0,   DINE),
+  V("Bar Bibi",            'bar','nob',     0.496,0.372,"Nob Hill · Natural wine bar, small plates",[],0,    BAR),
+  V("Amelie Wine Bar",     'bar','nob',     0.498,0.370,"1754 Polk · French wine bar, $12 flights",[],0,     BAR),
+  V("Whitechapel",         'bar','nob',     0.510,0.430,"600 Polk · Victorian gin palace, 750 gins",[],0,    BAR),
+  V("Lush Lounge",         'bar','nob',     0.512,0.428,"1092 Post · Long-running gay piano bar",[],0,       BAR),
+  V("House of Prime Rib",  'rest','nob',    0.496,0.374,"1906 Van Ness · SF institution since 1949",[],0,   DINE),
+  V("Acquerello",          'rest','nob',    0.496,0.372,"1722 Sacramento · Michelin-starred Italian",[],0,   [...D,0,0,0,0,0,0,0,0,0,0,0,35,55,68,78,82,80,72,55,32,12]),
+  V("Swan Oyster Depot",   'rest','nob',    0.492,0.375,"1517 Polk · Century-old raw bar, cash only",[],0,  [...D,0,18,52,72,78,75,68,62,52,42,32,22,12,4,0,0,0]),
+  V("Bob's Donuts",        'rest','nob',    0.494,0.372,"1621 Polk · Open 24 hours",[],0,                   [20,18,15,12,12,15,22,38,55,65,68,65,58,52,48,45,42,38,38,38,38,38,35,28]),
+  V("Harris' Restaurant",  'rest','nob',    0.488,0.372,"2100 Van Ness · Classic steakhouse & live jazz",[],0,DINE),
+  V("Mymy",                'rest','nob',    0.496,0.370,"Nob Hill · Hot brunch spot, lemon pancakes",[],0,   BRUNCH),
+  V("Rise & Set",          'rest','nob',    0.494,0.374,"Nob Hill · Thai & Australian brunch",[],0,          BRUNCH),
+  V("Nob Hill Cafe",       'rest','nob',    0.496,0.376,"1152 Taylor · Old-school Italian",[],0,             DINE),
+  V("Bar Iris",            'bar','nob',     0.498,0.354,"Russian Hill · Japanese cocktails, wingback chairs",[],0,BAR),
+  V("The Big Four",        'rest','nob',    0.498,0.370,"1075 California · Classics inside Huntington",[],0, DINE),
+  V("Collina",             'rest','nob',    0.496,0.372,"Nob Hill · Cozy Italian date night",[],0,           DINE),
+  V("Ti Piacera",          'rest','nob',    0.496,0.374,"Nob Hill · Northern Italian neighborhood",[],0,     DINE),
+  V("Lers Ros Thai",       'rest','nob',    0.510,0.432,"730 Larkin · Authentic Thai Tenderloin",[],0,       DINE),
+  V("Kokkari Estiatorio",  'rest','fidi',   0.620,0.415,"200 Jackson · Greek Michelin restaurant",[],0,      DINE),
+
+  // ── RUSSIAN HILL ─────────────────────────────────────────────────────────
+  V("Zarzuela",            'rest','nob',    0.503,0.342,"2000 Hyde · Spanish tapas, sangria",[],0,           DINE),
+  V("Frascati",            'rest','nob',    0.504,0.344,"1901 Hyde · Mediterranean neighborhood gem",[],0,   DINE),
+  V("La Folie",            'rest','nob',    0.502,0.348,"2316 Polk · French fine dining",[],0,               DINE),
+  V("Swensen's",           'rest','nob',    0.504,0.350,"1999 Hyde · SF ice cream since 1948",[],0,          [...D,8,18,38,55,65,68,62,55,48,42,38,35,30,22,12]),
+  V("Nick's Crispy Tacos", 'mex','nob',     0.504,0.346,"1500 Broadway · Crispy fish tacos",[],0,            LNCH),
+  V("The Cellar",          'bar','nob',     0.504,0.348,"Russian Hill · Neighborhood wine bar",[],0,         BAR),
+  V("Madrone Art Bar",     'bar','haight',  0.358,0.492,"500 Divisadero · NoPa art gallery dive",[],0,      LATE),
+
+  // ── TENDERLOIN deep cuts ──────────────────────────────────────────────────
+  V("Bourbon & Branch",    'bar','tender',  0.510,0.432,"501 Jones · Prohibition speakeasy",[],0,            BAR),
+  V("The Felix",           'bar','tender',  0.508,0.440,"138 Mason · Speakeasy below Bodega SF",[],0,        LATE),
+  V("Edinburgh Castle",    'bar','tender',  0.510,0.434,"950 Geary · Scottish pub, live music",[],0,         BAR),
+  V("Hemlock Tavern",      'bar','tender',  0.512,0.432,"1131 Polk · Live music dive",[],0,                  LATE),
+  V("Hotel Utah Saloon",   'bar','soma',    0.642,0.518,"500 4th St · SoMa live music dive",[],0,            LATE),
+  V("Bigfoot Lodge",       'bar','tender',  0.508,0.442,"1750 Polk · Kitschy lodge decor",[],0,              BAR),
+  V("Le Charm (Mathilde)", 'rest','soma',   0.545,0.518,"315 5th St · French bistro SoMa",[],0,              DINE),
+  V("Burma Love",          'rest','soma',   0.548,0.520,"211 8th St · Upscale Burmese, SoMa",[],0,           DINE),
+  V("Citizen Fox",         'bar','tender',  0.512,0.436,"Polk St · Neighborhood bar",[],0,                   BAR),
+  V("The Phoenix Hotel Bar",'bar','tender', 0.508,0.444,"601 Eddy · Rock n roll hotel bar",[],0,             BAR),
+
+  // ── SoMa extended ────────────────────────────────────────────────────────
+  V("Deli Board",          'rest','soma',   0.548,0.522,"1058 Folsom · Legendary deli sandwiches",[],0,      LNCH),
+  V("Montesacro",          'pizza','soma',  0.545,0.520,"512 2nd St · Roman-style pinsa",[],0,               DINE),
+  V("Pawn Shop Tavern",    'dive','soma',   0.545,0.525,"429 Brannan · SoMa dive",[],0,                     BAR),
+  V("21st Amendment",      'bar','soma',    0.650,0.525,"563 2nd St · Craft brewery near ballpark",['mlb'],5,ALL),
+  V("Thirsty Bear Brewing",'bar','soma',    0.648,0.522,"661 Howard · Spanish tapas & craft beer",['mlb'],0, ALL),
+  V("Hog & Rocks",         'bar','soma',    0.548,0.528,"3431 19th · Whiskey & oyster bar",[],0,             BAR),
+  V("Dirty Habit",         'bar','soma',    0.560,0.520,"12 4th St · Rooftop bar, Hotel Zelos",[],0,         BAR),
+  V("SoMa Streat Food Park",'rest','soma',  0.555,0.530,"428 11th St · Food truck park",[],0,                LNCH),
+  V("The Pawnshop",        'bar','soma',    0.545,0.525,"SoMa · Bar & late night",[],0,                     BAR),
+  V("Luce Restaurant",     'rest','soma',   0.558,0.518,"888 Howard · Hotel Intercontinental",[],0,          DINE),
+  V("Kin Khao",            'rest','soma',   0.610,0.440,"Union Square Thai, Michelin",[],0,                  DINE),
+  V("Mr. Tipple's Jazz",   'bar','soma',    0.490,0.464,"1 Grove · Dim sum + live jazz",[],0,                LATE),
+
+  // ── FINANCIAL DISTRICT / JACKSON SQUARE ──────────────────────────────────
+  V("Cotogna",             'rest','fidi',   0.618,0.414,"490 Pacific · Rustic Italian, wood-fired",[],0,     DINE),
+  V("Quince",              'rest','fidi',   0.618,0.415,"470 Pacific · 3-Michelin-star",[],0,                [...D,0,0,0,0,0,0,0,0,0,0,0,35,55,65,72,78,80,72,55,30]),
+  V("Wayfare Tavern",      'rest','fidi',   0.618,0.418,"558 Sacramento · Tyler Florence",[],0,              DINE),
+  V("Park Tavern",         'rest','nb',     0.558,0.264,"1652 Stockton · NB upscale",[],0,                   DINE),
+  V("Perbacco",            'rest','fidi',   0.616,0.416,"230 California · Northern Italian",[],0,             DINE),
+  V("Coqueta",             'bar','fidi',    0.726,0.398,"Pier 5 · Spanish, Embarcadero",[],0,                DINE),
+  V("La Mar",              'rest','fidi',   0.728,0.402,"Pier 1.5 · Peruvian ceviche, bay views",[],0,      LNCH),
+  V("Charmaine's Rooftop", 'bar','soma',    0.558,0.515,"Market St · Rooftop lounge",[],0,                   BAR),
+  V("One Market",          'rest','fidi',   0.718,0.408,"1 Market · Power lunch, bay view",[],0,             LNCH),
+  V("Hog Island (Ferry Bldg)",'rest','fidi',0.722,0.400,"Ferry Bldg · Best oysters in SF",[],0,             LNCH),
+  V("Slanted Door (Out the Door)",'rest','fidi',0.722,0.402,"Ferry Bldg · Vietnamese",[],0,                  LNCH),
+
+  // ── MARINA / COW HOLLOW extended ─────────────────────────────────────────
+  V("Flores",              'mex','marina',  0.375,0.208,"2030 Union · Mexican cocktails, Union St",[],0,     DINE),
+  V("Celeste Wine Bar",    'bar','marina',  0.374,0.206,"Union St · Espresso martinis, sexy",[],0,           BAR),
+  V("The Tailor's Son",    'bar','marina',  0.374,0.206,"Pacific Heights · Italian cocktails",[],0,          DINE),
+  V("Octavia",             'rest','marina', 0.388,0.215,"1701 Octavia · Michelin Pac Heights",[],0,          DINE),
+  V("Cafe des Amis",       'rest','marina', 0.376,0.208,"2000 Union · French brasserie",[],0,               DINE),
+  V("Wildseed",            'rest','marina', 0.376,0.210,"222 Columbus · Plant-based fine dining",[],0,       DINE),
+  V("A16",                 'pizza','marina',0.388,0.214,"2355 Chestnut · Southern Italian, Campania",[],0,   DINE),
+  V("Atelier Crenn",       'rest','marina', 0.380,0.210,"3127 Fillmore · 3-Michelin-star",[],0,             [...D,0,0,0,0,0,0,0,0,0,0,0,30,48,62,72,80,82,78,65,45,25]),
+  V("Quik Dog",            'rest','soma',   0.638,0.688,"Mission Bay · Hot dogs & garlic fries near Chase",[],0,ALL),
+
+  // ── CASTRO extended ──────────────────────────────────────────────────────
+  V("Frances",             'rest','castro', 0.356,0.556,"3870 17th · Michelin neighborhood gem",[],0,        DINE),
+  V("Starbelly",           'rest','castro', 0.358,0.554,"3583 16th · Cal cuisine, full bar",[],0,            DINE),
+  V("Anchor Oyster Bar",   'rest','castro', 0.355,0.558,"579 Castro · SF institution since 1977",[],0,       LNCH),
+  V("2223 Restaurant",     'rest','castro', 0.356,0.555,"2223 Market · Castro neighborhood rest.",[],0,      DINE),
+  V("Eureka!",             'rest','castro', 0.357,0.554,"4063 18th · Craft burgers & beer",[],0,             DINE),
+  V("Hot Cookie",          'rest','castro', 0.356,0.558,"407 Castro · Late-night cookies",[],0,              [...D,10,22,38,55,65,68,65,60,58,62,70,75,78,72,58,38]),
+  V("Ramen Underground",   'rest','tender', 0.510,0.440,"Tenderloin · Underground ramen",[],0,               DINE),
+
+  // ── MISSION extended ─────────────────────────────────────────────────────
+  V("La Palma Mexicatessen",'mex','mission',0.428,0.642,"2884 24th · Handmade tortillas since 1953",[],0,   LNCH),
+  V("Locanda",             'rest','mission',0.418,0.558,"557 Valencia · Roman osteria",[],0,                 DINE),
+  V("Rosamunde Sausage",   'bar','mission', 0.414,0.540,"3323 Mission · Beer & sausages",[],0,               ALL),
+  V("Bi-Rite Market",      'rest','mission',0.413,0.557,"3639 18th · Market, deli, legendary grocery",[],0,  LNCH),
+  V("Delfina",             'rest','mission',0.416,0.566,"3621 18th · Cal-Italian classic",[],0,              DINE),
+  V("Lolinda",             'rest','mission',0.414,0.555,"2518 Mission · Argentine steakhouse",[],0,          DINE),
+  V("Taqueria Vallarta",   'mex','mission', 0.426,0.638,"3033 24th · 24th St neighborhood taqueria",[],0,   LNCH),
+  V("Humphry Slocombe",    'rest','mission',0.418,0.565,"2790 Harrison · SF artisan ice cream",[],0,         [...D,10,22,38,55,65,68,65,62,58,60,65,68,65,50,32]),
+  V("Wise Sons Deli",      'rest','mission',0.418,0.555,"3150 24th · Jewish deli Mission",[],0,              LNCH),
+  V("La Lengua",           'mex','mission', 0.432,0.635,"2730 Mission · Upscale Mexican",[],0,              DINE),
+  V("Panchita's Pupuseria",'mex','mission', 0.422,0.645,"3091 16th · Salvadoran pupusas",[],0,              LNCH),
+  V("Pauline's Pizza",     'pizza','mission',0.416,0.540,"260 Valencia · Wood-fired gourmet",[],0,           DINE),
+  V("Limon Rotisserie",    'mex','mission', 0.418,0.558,"1001 S Van Ness · Peruvian rotisserie",[],0,       DINE),
+  V("Taqueria San Jose",   'mex','mission', 0.424,0.648,"2830 Mission · Classic taco counter",[],0,          LNCH),
+  V("Woodhouse Fish Co",   'rest','mission',0.412,0.548,"2073 Market · New England seafood",[],0,            LNCH),
+  V("Namu Stonepot",       'rest','mission',0.416,0.552,"499 Dolores · Korean-California",[],0,              DINE),
+  V("Casements",           'bar','mission', 0.414,0.548,"300 Fell · Irish queer bar, jukebox",[],0,         BAR),
+  V("Lost & Found",        'bar','mission', 0.416,0.554,"1001 Guerrero · Neighborhood outdoor bar",[],10,   ALL),
+  V("Beehive Bar",         'bar','mission', 0.418,0.555,"842 Valencia · Retro 60s cocktail lounge",[],0,    BAR),
+  V("Dalva",               'dive','mission',0.416,0.570,"3121 16th · Classic dive bar",[],0,                BAR),
+  V("Last Rites",          'dive','mission',0.418,0.558,"718 14th · Tiki dive hybrid",[],0,                 BAR),
+  V("Bloodhound",          'bar','soma',    0.505,0.532,"1145 Folsom · Great happy hour SoMa",['nfl'],0,    BAR),
+  V("El Rio",              'bar','mission', 0.425,0.588,"3158 Mission · Legendary outdoor dance",[],10,     LATE),
+
+  // ── HAIGHT extended ──────────────────────────────────────────────────────
+  V("Rosamunde (Haight)",  'bar','haight',  0.314,0.500,"545 Haight · Beer & sausages",[],0,                ALL),
+  V("Aub Zam Zam",         'bar','haight',  0.332,0.498,"1633 Haight · Persian decor martini bar",[],0,    BAR),
+  V("Kezar Pub",           'bar','haight',  0.310,0.514,"770 Stanyan · Sports bar GGP",['nfl','mlb'],5,     ALL),
+  V("Alembic",             'bar','haight',  0.330,0.500,"1725 Haight · Whiskey bar, small plates",[],0,    BAR),
+  V("Magnolia Brewpub",    'bar','haight',  0.328,0.500,"1398 Haight · Craft brewery",[],0,                ALL),
+  V("Trax",                'dive','haight', 0.328,0.498,"1437 Haight · Neighborhood dive",[],0,             BAR),
+  V("Little Star Pizza",   'pizza','haight',0.340,0.492,"846 Divisadero · Deep dish Western Addition",[],0, DINE),
+  V("Kate's Kitchen",      'rest','haight', 0.316,0.504,"471 Haight · Breakfast & brunch diner",[],0,      BRUNCH),
+  V("Kan Zaman",           'bar','haight',  0.322,0.502,"1793 Haight · Middle Eastern hookah bar",[],0,    BAR),
+  V("Nopa",                'rest','haight', 0.344,0.484,"560 Divisadero · Late-night farm-to-table",[],0,   DINE),
+  V("Beretta Divisadero",  'bar','haight',  0.346,0.488,"1199 Valencia · Pizza & cocktails NoPa",[],0,     DINE),
+
+  // ── PACIFIC HEIGHTS / JAPANTOWN ──────────────────────────────────────────
+  V("Nari Thai",           'rest','nob',    0.410,0.390,"1625 Post · Michelin-starred Thai, Japantown",[],0, DINE),
+  V("Waraku",              'rest','nob',    0.408,0.392,"Japan Center · Japanese ramen & izakaya",[],0,     DINE),
+  V("Rooh",                'rest','tender', 0.484,0.460,"333 Brannan · Indian progressive",[],0,            DINE),
+  V("Osteria Coppa",       'rest','nob',    0.406,0.392,"Japan Center · Italian",[],0,                      DINE),
+  V("The Tailor's Son",    'bar','nob',     0.404,0.388,"Pacific Heights · Italian cocktail bar",[],0,      DINE),
+  V("Pizzeria Delfina",    'pizza','nob',   0.408,0.390,"3611 18th · Delfina's casual sibling",[],0,        DINE),
+  V("Harris Restaurant",   'rest','nob',    0.488,0.372,"2100 Van Ness · Prime steakhouse",[],0,            DINE),
+  V("Octavia",             'rest','nob',    0.402,0.388,"1701 Octavia · Pac Heights Michelin",[],0,         DINE),
+  V("Vivace",              'rest','nob',    0.406,0.390,"2125 Fillmore · Italian Pac Heights",[],0,         DINE),
+
+  // ── CHINATOWN ────────────────────────────────────────────────────────────
+  V("R&G Lounge",          'rest','china',  0.580,0.352,"631 Kearny · Salt & pepper crab",[],0,            DINE),
+  V("Great Eastern",       'rest','china',  0.582,0.348,"649 Jackson · Obama's dim sum",[],0,               LNCH),
+  V("House of Nanking",    'rest','china',  0.576,0.354,"919 Kearny · Cash-only, legendary",[],0,           DINE),
+  V("Golden Gate Bakery",  'rest','china',  0.578,0.350,"1029 Grant · Legendary egg tarts",[],0,            CAFE),
+  V("Sam Wo",              'rest','china',  0.572,0.358,"713 Clay · SF's oldest restaurant, wonton",[],0,   DINE),
+  V("Lai Hong Lounge",     'rest','china',  0.575,0.352,"1416 Powell · Chinatown dim sum",[],0,             LNCH),
+  V("Mister Jiu's",        'rest','china',  0.572,0.350,"28 Waverly · Michelin Cantonese",[],0,             DINE),
+  V("Li Po Cocktail Lounge",'dive','china', 0.576,0.352,"916 Grant · Cave-like dive, famous mai tais",[],0, BAR),
+  V("Empress by Boon",     'rest','china',  0.574,0.348,"838 Grant · Michelin Cantonese fine dining",[],0,  DINE),
+  V("New Asia",            'rest','china',  0.575,0.354,"772 Pacific · Dim sum weekend morning",[],0,       LNCH),
+
+  // ── EXCELSIOR / OUTER MISSION ────────────────────────────────────────────
+  V("Broken Record",       'bar','dog',     0.448,0.780,"1166 Geneva · Dive & wood-fired pizza",[],0,       BAR),
+  V("Art's Cafe",          'rest','dog',    0.445,0.778,"1135 Valencia · Classic diner breakfast",[],0,     BRUNCH),
+  V("Little Nepal",        'rest','dog',    0.445,0.775,"925 Cortland · Nepali Bernal Heights",[],0,        DINE),
+  V("Precita Park Cafe",   'rest','dog',    0.490,0.695,"500 Precita · Bernal café",[],0,                   CAFE),
+  V("Wild Side West",      'dive','dog',    0.492,0.698,"424 Cortland · Lesbian dive, garden",[],15,        BAR),
+
+  // ── FISHERMANS WHARF ─────────────────────────────────────────────────────
+  V("Scoma's",             'rest','nb',     0.618,0.238,"Pier 47 · Fisherman's Wharf seafood",[],0,         DINE),
+  V("Fog Harbor Fish House",'rest','nb',    0.628,0.232,"Pier 39 · Bay views, seafood",[],0,               DINE),
+  V("Alioto's",            'rest','nb',     0.618,0.235,"8 Fisherman's Wharf · Since 1925",[],0,            DINE),
+  V("Buena Vista Cafe",    'bar','nb',      0.604,0.238,"2765 Hyde · Irish coffees since 1952",[],0,        ALL),
+
+  // ── DOGPATCH extended ────────────────────────────────────────────────────
+  V("Piccino",             'rest','dog',    0.638,0.650,"1001 Minnesota · Italian brunch",[],0,              BRUNCH),
+  V("Plow",                'rest','dog',    0.636,0.652,"1299 18th · Weekend brunch institution",[],0,       BRUNCH),
+  V("Serpentine",          'rest','dog',    0.634,0.648,"2495 3rd St · Waterfront gastropub",[],0,           DINE),
+  V("Magnolia Dogpatch",   'bar','dog',     0.638,0.650,"2505 3rd St · Smokestack BBQ & craft beer",[],0,   DINE),
+  V("Ungrafted",           'bar','dog',     0.636,0.648,"1147 Minnesota · Wine bar farm-to-table",[],0,     DINE),
+  V("Porthole SF",         'bar','dog',     0.640,0.652,"855 Terry Francois · Bayfront cocktails",[],0,     BAR),
+  V("Wolfsbane",           'rest','dog',    0.632,0.650,"Dogpatch · Michelin tasting menu 2025",[],0,       [...D,0,0,0,0,0,0,0,0,0,0,0,35,55,70,82,85,80,70,52]),
+  V("Hi Dive",             'dive','dog',    0.596,0.668,"100 Brannan · Waterfront live music",['mlb'],15,   BAR),
+  V("Gialina",             'pizza','dog',   0.592,0.655,"2842 Diamond · Artisan Neapolitan",[],0,           DINE),
+];
+
 const HAPPY_VENUES=[
   {name:"The Buena Vista",    cat:'happy',nid:'nb',     cx:0.600,cy:0.285,addr:"North Beach · Famous Irish coffees",     happyStart:4, happyEnd:7, gameboost:[],         rainpenalty:0,  curve:[5,4,3,3,4,5,6,8,12,16,22,28,32,36,38,42,44,48,55,60,58,50,38,18]},
   {name:"Vesuvio Cafe",       cat:'happy',nid:'nb',     cx:0.555,cy:0.295,addr:"North Beach · Beat Generation landmark", happyStart:16,happyEnd:19,gameboost:[],         rainpenalty:0,  curve:[4,3,3,3,3,4,5,7,10,14,20,28,36,42,46,52,58,62,68,72,65,52,35,18]},
@@ -1336,10 +1519,9 @@ function updateBanner(){
 
 function getVisibleVenues(){
   const out=[];
-  VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
-  NB_VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
-  ALL_VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
-  EXTRA_VENUES.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);});
+  [VENUES,NB_VENUES,ALL_VENUES,EXTRA_VENUES,VENUES2].forEach(arr=>
+    arr.forEach(v=>{if(visibleCats.has(v.cat))out.push(v);})
+  );
   if(visibleCats.has('happy'))HAPPY_VENUES.forEach(v=>out.push(v));
   return out;
 }
