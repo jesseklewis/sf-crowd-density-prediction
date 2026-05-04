@@ -1838,6 +1838,8 @@ function animatePulse() {
 }
 // Run pulse at 30fps only when needed — won't block touch events
 let pulseInterval = setInterval(animatePulse, 33);
+buildCats();
+updateLocBadge();
 games=mockGames();
 hour=currentHour;
 minute=currentHour*60+now.getMinutes();
