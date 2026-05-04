@@ -809,7 +809,7 @@ const visibleCats=new Set(['bar','rest','pizza','mex','irish','dive','happy','mu
 // Zoom/pan state
 let zoom=1, panX=0, panY=0;
 let isPanning=false, lastPanX=0, lastPanY=0, pinchDist0=0;
-const MIN_ZOOM=1, MAX_ZOOM=8;
+const MIN_ZOOM=1, MAX_ZOOM=20;
 function wpx(rx,ry){ return [(rx*W+panX)*zoom, (ry*H+panY)*zoom]; }
 function screenToMap(sx,sy){ return [(sx/zoom-panX)/W, (sy/zoom-panY)/H]; }
 function clampPan(){
@@ -1461,49 +1461,121 @@ function draw(){
 
   if(visibleCats.has('muni')){
     MUNI_STOPS.forEach(s=>{
-      const[cx,cy]=px(s.cx,s.cy);const running=muniRunning(hour,s);
+      const[cx,cy]=px(s.cx,s.cy);
+      const sx=(cx+panX)*zoom, sy=(cy+panY)*zoom;
+      if(sx<-10||sx>W+10||sy<-10||sy>H+10)return;
+      const running=muniRunning(hour,s);
       const isHov=hoverVenue&&hoverVenue._type==='muni'&&hoverVenue.name===s.name;
-      // Pick color from first line listed; multi-line trunk gets white
       const lineKeys=s.line.split('/');
       const col=lineKeys.length>2?'#b0c4de':(MUNI_LINES[lineKeys[0]]?.color||'#f97316');
-      const dimCol=running?col:'#2a2a2a';
-      const glowCol=running?col+'44':'transparent';
-      if(running){ctx.beginPath();ctx.arc(cx,cy,(isHov?9:7),0,Math.PI*2);ctx.fillStyle=glowCol;ctx.fill();}
-      ctx.beginPath();ctx.arc(cx,cy,isHov?6:4,0,Math.PI*2);
+      ctx.save();ctx.setTransform(1,0,0,1,0,0);
+      if(running){ctx.beginPath();ctx.arc(sx,sy,isHov?9:7,0,Math.PI*2);ctx.fillStyle=col+'44';ctx.fill();}
+      ctx.beginPath();ctx.arc(sx,sy,isHov?6:4,0,Math.PI*2);
       ctx.fillStyle=running?'#fff':'#333';ctx.fill();
-      ctx.strokeStyle=dimCol;ctx.lineWidth=running?2:1;ctx.beginPath();ctx.arc(cx,cy,isHov?6:4,0,Math.PI*2);ctx.stroke();
-      // Line color ring
-      ctx.beginPath();ctx.arc(cx,cy,isHov?5:3,0,Math.PI*2);
+      ctx.strokeStyle=running?col:'#2a2a2a';ctx.lineWidth=running?2:1;
+      ctx.beginPath();ctx.arc(sx,sy,isHov?6:4,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.arc(sx,sy,isHov?5:3,0,Math.PI*2);
       ctx.fillStyle=running?col:'#444';ctx.fill();
+      // Stop name label at high zoom
+      if(zoom>=4&&running){
+        ctx.font='9px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+        ctx.fillStyle='rgba(255,255,255,0.7)';
+        ctx.fillText(s.name,sx,sy+8);
+      }
+      ctx.restore();
     });
   }
 
-  getVisibleVenues().forEach(v=>{
-    if(v.cat==='happy')return; // drawn separately as $ symbols below
+  // Sort venues: selected/hovered last so they render on top
+  const visVenues = getVisibleVenues().filter(v=>v.cat!=='happy');
+  visVenues.sort((a,b)=>{
+    const aTop=(hoverVenue===a||selectedVenue===a)?1:0;
+    const bTop=(hoverVenue===b||selectedVenue===b)?1:0;
+    return aTop-bTop;
+  });
+
+  // Dots use fixed screen-space size so they don't grow with zoom
+  const DOT_R = 4; // constant screen pixels
+  const DOT_R_SEL = 6;
+  const labelRects = []; // collision list for label placement
+
+  visVenues.forEach(v=>{
     const d=liveValue(v);const cat=CATEGORIES.find(c=>c.id===v.cat);
-    const[cx,cy]=px(v.cx,v.cy);const isH=hoverVenue===v,isS=selectedVenue===v;
-    const r=Math.max(3,(isH||isS?7:5)/Math.sqrt(zoom));
-    ctx.beginPath();ctx.arc(cx,cy,r+1.5,0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fill();
-    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=cat.color;ctx.fill();
-    if(isH||isS){ctx.beginPath();ctx.arc(cx,cy,r+2,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.5/zoom;ctx.stroke();}
-    // Show name label when zoomed in enough
-    if(zoom>=2.5){
-      ctx.font=`${Math.max(7,9/zoom)}px sans-serif`;
-      ctx.textAlign='center';ctx.textBaseline='top';
-      ctx.fillStyle='rgba(255,255,255,0.85)';
-      ctx.fillText(v.name,cx,cy+r+1.5);
+    const[cx,cy]=px(v.cx,v.cy);
+    const isH=hoverVenue===v,isS=selectedVenue===v;
+    // Convert map coords to screen coords for fixed-size drawing
+    const sx=(cx+panX)*zoom, sy=(cy+panY)*zoom;
+    // Skip if outside canvas
+    if(sx<-20||sx>W+20||sy<-20||sy>H+20)return;
+
+    const r=isH||isS?DOT_R_SEL:DOT_R;
+
+    // Draw in screen space (after restoring transform)
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0); // reset to screen space
+    // Shadow
+    ctx.beginPath();ctx.arc(sx,sy,r+1.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fill();
+    // Fill
+    ctx.beginPath();ctx.arc(sx,sy,r,0,Math.PI*2);
+    ctx.fillStyle=cat.color;ctx.fill();
+    // Selected ring
+    if(isH||isS){
+      ctx.beginPath();ctx.arc(sx,sy,r+3,0,Math.PI*2);
+      ctx.strokeStyle='rgba(255,255,255,0.9)';ctx.lineWidth=1.5;ctx.stroke();
+    }
+    // Density indicator — small inner ring shows busyness
+    if(d>0){
+      ctx.beginPath();ctx.arc(sx,sy,r*0.45,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${0.15+d*0.005})`;ctx.fill();
+    }
+    ctx.restore();
+
+    // Labels — only when zoomed in, with collision detection
+    if(zoom>=3){
+      const fontSize=Math.max(9,Math.min(12,zoom*1.4));
+      ctx.save();
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.font=`${fontSize}px -apple-system,sans-serif`;
+      const tw=ctx.measureText(v.name).width;
+      const lx=sx, ly=sy+r+3+fontSize*0.5;
+      const rect={x:lx-tw/2-2,y:ly-fontSize*0.6,w:tw+4,h:fontSize+2};
+      // Check collision with existing labels
+      const collides=labelRects.some(lr=>
+        rect.x<lr.x+lr.w&&rect.x+rect.w>lr.x&&rect.y<lr.y+lr.h&&rect.y+rect.h>lr.y
+      );
+      if(!collides||isH||isS){
+        labelRects.push(rect);
+        // Dark pill background for readability
+        ctx.fillStyle='rgba(0,0,0,0.55)';
+        ctx.beginPath();
+        ctx.roundRect(rect.x,rect.y,rect.w,rect.h,3);
+        ctx.fill();
+        ctx.fillStyle=isH||isS?'#fff':'rgba(255,255,255,0.82)';
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(v.name,lx,ly);
+      }
+      ctx.restore();
     }
   });
 
   if(visibleCats.has('happy')){
     HAPPY_VENUES.forEach(v=>{
-      const[cx,cy]=px(v.cx,v.cy);const state=happyState(hour,v);const br=happyBr(hour,v);
+      const[cx,cy]=px(v.cx,v.cy);
+      const sx=(cx+panX)*zoom, sy=(cy+panY)*zoom;
+      if(sx<-20||sx>W+20||sy<-20||sy>H+20)return;
+      const state=happyState(hour,v);const br=happyBr(hour,v);
       const isH=hoverVenue===v,isS=selectedVenue===v;const active=state!=='off';
-      if(active){ctx.beginPath();ctx.arc(cx,cy,10,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.12*br})`;ctx.fill();ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.22*br})`;ctx.fill();}
-      ctx.font=`bold ${Math.max(9,11/zoom)}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.save();ctx.setTransform(1,0,0,1,0,0);
+      if(active){
+        ctx.beginPath();ctx.arc(sx,sy,10,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.12*br})`;ctx.fill();
+        ctx.beginPath();ctx.arc(sx,sy,7,0,Math.PI*2);ctx.fillStyle=`rgba(250,204,21,${0.22*br})`;ctx.fill();
+      }
+      ctx.font=`bold 11px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillStyle=active?`rgba(${state==='ending'?'250,204,21':'255,220,50'},${br})`:'rgba(80,60,20,0.7)';
-      ctx.fillText('$',cx,cy);
-      if(isH||isS){ctx.beginPath();ctx.arc(cx,cy,9,0,Math.PI*2);ctx.strokeStyle=active?'rgba(250,204,21,0.8)':'rgba(80,60,20,0.5)';ctx.lineWidth=1.5;ctx.stroke();}
+      ctx.fillText('$',sx,sy);
+      if(isH||isS){ctx.beginPath();ctx.arc(sx,sy,9,0,Math.PI*2);ctx.strokeStyle=active?'rgba(250,204,21,0.8)':'rgba(80,60,20,0.5)';ctx.lineWidth=1.5;ctx.stroke();}
+      ctx.restore();
     });
   }
 
@@ -1611,12 +1683,26 @@ function buildCats(){
 }
 
 function hitTest(sx,sy){
-  // Convert screen coords → map coords accounting for zoom/pan
-  const[mx,my]=screenToMap(sx,sy);
-  const threshold=18/Math.max(1,zoom); // tighter at zoom
+  // sx,sy are already in canvas logical coords (accounting for devicePixelRatio via getBoundingClientRect scaling)
+  const threshold=14; // screen pixels — fixed regardless of zoom
   let best=null,bestD=threshold;
-  if(visibleCats.has('muni'))MUNI_STOPS.forEach(s=>{const d=Math.hypot(mx-s.cx,my-s.cy)*W;if(d<bestD){bestD=d;best={...s,_type:'muni'};}});
-  getVisibleVenues().forEach(v=>{const d=Math.hypot(mx-v.cx,my-v.cy)*W;if(d<bestD){bestD=d;best=v;}});
+
+  // Muni stops — map coords converted to screen
+  if(visibleCats.has('muni'))MUNI_STOPS.forEach(s=>{
+    const[cx,cy]=px(s.cx,s.cy);
+    const scx=(cx+panX)*zoom, scy=(cy+panY)*zoom;
+    const d=Math.hypot(sx-scx,sy-scy);
+    if(d<bestD){bestD=d;best={...s,_type:'muni'};}
+  });
+
+  // Venues — screen-space distance
+  getVisibleVenues().forEach(v=>{
+    const[cx,cy]=px(v.cx,v.cy);
+    const scx=(cx+panX)*zoom, scy=(cy+panY)*zoom;
+    const d=Math.hypot(sx-scx,sy-scy);
+    if(d<bestD){bestD=d;best=v;}
+  });
+
   return best;
 }
 
