@@ -33,7 +33,7 @@
     #event-banner .ebadge { border-radius: 99px; padding: 3px 9px; font-size: 10px; white-space: nowrap; margin-left: 10px; flex-shrink: 0; }
 
     /* MAP */
-    #canvas-wrap { position: relative; width: 100%; border-radius: var(--radius-lg); overflow: hidden; background: #101520; }
+    #canvas-wrap { position: relative; overflow: hidden; background: #101520; border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
     canvas { display: block; width: 100%; height: auto; }
     #overlay-info { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.65); border-radius: var(--radius-md); padding: 6px 10px; color: #fff; pointer-events: none; }
     .time-big { font-size: 16px; font-weight: 500; }
@@ -51,15 +51,18 @@
     #tooltip { position: absolute; background: rgba(0,0,0,0.88); border-radius: var(--radius-md); padding: 7px 11px; color: #fff; font-size: 11px; pointer-events: none; display: none; white-space: nowrap; line-height: 1.55; z-index: 10; max-width: 220px; }
 
     /* TIME SCRUBBER — directly under map */
-    /* Zoom bar */
-    #zoom-bar { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--color-surface); border-top: 0.5px solid var(--color-border); }
-    #zoom-bar button { width: 30px; height: 30px; border-radius: 50%; border: 0.5px solid var(--color-border2); background: var(--color-surface2); color: var(--color-text); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; line-height: 1; user-select: none; }
-    #zoom-bar button:active { background: rgba(255,255,255,0.12); }
-    #zoom-reset { font-size: 13px !important; color: var(--color-text2) !important; }
-    #zoom-range { flex: 1; accent-color: #3b82f6; height: 4px; cursor: pointer; touch-action: none; }
-    #zoom-label { font-size: 11px; color: var(--color-text3); min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
-    #pinch-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.75); color: #fff; font-size: 13px; padding: 10px 18px; border-radius: 99px; pointer-events: none; opacity: 0; transition: opacity 0.3s; white-space: nowrap; z-index: 20; }
-    .time-section { background: var(--color-surface); border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 10px 14px 12px; margin-bottom: 12px; }
+    /* Map row — canvas + vertical zoom bar side by side */
+    #map-row { display: flex; align-items: stretch; gap: 0; margin-bottom: 0; }
+    #canvas-wrap { flex: 1; min-width: 0; border-radius: var(--radius-lg) 0 0 0; }
+    /* Vertical zoom bar */
+    #zoom-bar { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; background: var(--color-surface); border-radius: 0 var(--radius-lg) 0 0; border-left: 0.5px solid var(--color-border); width: 38px; flex-shrink: 0; }
+    #zoom-bar button { width: 26px; height: 26px; border-radius: 50%; border: 0.5px solid var(--color-border2); background: var(--color-surface2); color: var(--color-text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; line-height: 1; user-select: none; }
+    #zoom-bar button:active { background: rgba(255,255,255,0.15); }
+    #zoom-reset { font-size: 11px !important; color: var(--color-text3) !important; border-color: transparent !important; background: transparent !important; }
+    #zoom-range { writing-mode: vertical-lr; direction: rtl; flex: 1; accent-color: #3b82f6; width: 4px; min-height: 60px; cursor: pointer; touch-action: none; appearance: slider-vertical; -webkit-appearance: slider-vertical; }
+    #zoom-label { font-size: 9px; color: var(--color-text3); font-variant-numeric: tabular-nums; writing-mode: horizontal-tb; text-align: center; }
+    #pinch-hint { position: absolute; top: 50%; left: 45%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.75); color: #fff; font-size: 13px; padding: 10px 18px; border-radius: 99px; pointer-events: none; opacity: 0; transition: opacity 0.3s; white-space: nowrap; z-index: 20; }
+    .time-section { background: var(--color-surface); border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 10px 14px 12px; margin-bottom: 12px; margin-right: 38px; }
     .time-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
     .time-display-inline { font-size: 15px; font-weight: 500; color: var(--color-text); }
     .time-date-inline { font-size: 10px; color: var(--color-text3); }
@@ -141,7 +144,8 @@
     <div class="ebadge" id="ev-badge"></div>
   </div>
 
-  <div id="canvas-wrap">
+  <div id="map-row">
+    <div id="canvas-wrap">
     <canvas id="map" height="460"></canvas>
     <div id="overlay-info" style="display:none">
       <div class="time-big" id="time-display">--</div>
@@ -156,14 +160,17 @@
     <div id="tooltip"></div>
     <div id="pinch-hint">🤏 Pinch to zoom</div>
   </div>
-
-  <div id="zoom-bar">
-    <button id="zoom-out" aria-label="Zoom out">−</button>
-    <input type="range" id="zoom-range" min="0" max="100" value="0" step="1" aria-label="Zoom level">
-    <button id="zoom-in" aria-label="Zoom in">+</button>
-    <button id="zoom-reset" aria-label="Reset zoom" title="Reset zoom">⊙</button>
-    <span id="zoom-label">1×</span>
+    <div id="zoom-bar">
+      <button id="zoom-in" aria-label="Zoom in">+</button>
+      <input type="range" id="zoom-range" min="0" max="100" value="0" step="1"
+             aria-label="Zoom level" orient="vertical">
+      <button id="zoom-out" aria-label="Zoom out">−</button>
+      <span id="zoom-label">1×</span>
+      <button id="zoom-reset" aria-label="Reset" title="Reset zoom">⊙</button>
+    </div>
   </div>
+
+
     <div class="time-header">
       <div>
         <div class="time-display-inline" id="time-display-main">--</div>
@@ -927,14 +934,19 @@ function hidePinchHint(){
   const h=document.getElementById('pinch-hint');
   if(h)h.style.opacity='0';
 }
-// SF map bounds (approximate, matching the canvas coordinate system)
-const SF_BOUNDS = { latMin:37.706, latMax:37.814, lngMin:-122.525, lngMax:-122.352 };
+// Affine geo→canvas transform calibrated from Muni station anchor points
+// rx = GEO_A[0] + GEO_A[1]*lng + GEO_A[2]*lat
+// ry = GEO_B[0] + GEO_B[1]*lng + GEO_B[2]*lat
+const GEO_A = [739.618255, 5.433080, -1.955923];
+const GEO_B = [32.260860, -0.447760, -2.292870];
+// Rough bounds for "are you in SF?" check
+const SF_BOUNDS = { latMin:37.68, latMax:37.83, lngMin:-122.53, lngMax:-122.35 };
 let userLoc = null; // {rx, ry, accuracy} or null
 let locStatus = 'idle'; // idle | loading | active | denied | outside
 
 function latlngToRxy(lat, lng) {
-  const rx = (lng - SF_BOUNDS.lngMin) / (SF_BOUNDS.lngMax - SF_BOUNDS.lngMin);
-  const ry = 1 - (lat - SF_BOUNDS.latMin) / (SF_BOUNDS.latMax - SF_BOUNDS.latMin);
+  const rx = GEO_A[0] + GEO_A[1]*lng + GEO_A[2]*lat;
+  const ry = GEO_B[0] + GEO_B[1]*lng + GEO_B[2]*lat;
   return { rx, ry };
 }
 
@@ -978,7 +990,7 @@ function drawUserLocation() {
   const pulse = 0.5 + 0.5 * Math.sin(locPulse);
 
   // Accuracy ring (scaled by zoom)
-  const accPx = (userLoc.accuracy / 111000) * W / (SF_BOUNDS.lngMax - SF_BOUNDS.lngMin);
+  const accPx = (userLoc.accuracy / 111000) * W * Math.abs(GEO_A[1]);
   if (accPx > 4 && accPx < 120) {
     ctx.beginPath(); ctx.arc(cx, cy, accPx, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(96,165,250,${0.15 + pulse * 0.08})`;
@@ -1268,7 +1280,7 @@ function getSunState(min, srHour, ssHour) {
     // Peak brightness at solar noon
     const noon = 0.5;
     const distFromNoon = Math.abs(progress - noon);
-    size = 7 + 3 * (1 - distFromNoon * 2);
+    size = 5 + 2 * (1 - distFromNoon * 2);
     // Subtle muted sun colors — pale warm tones only
     const sunColors = progress < 0.12 || progress > 0.88
       ? [210, 155, 100]   // very muted warm amber at horizon
@@ -1279,7 +1291,7 @@ function getSunState(min, srHour, ssHour) {
   } else if (isMorningTwilight) {
     progress = 0; // just below horizon east
     opacity = (min - (srMin - 60)) / 60;
-    size = 6;
+    size = 4;
     color = [200, 150, 110];
   } else {
     progress = 1; // just below horizon west
@@ -1311,7 +1323,7 @@ function drawSky(min) {
   // Stars at night
   const nightness = min < 360 ? 1 : min < 420 ? 1 - (min-360)/60 : min > 1200 ? (min-1200)/60 : min > 1140 ? (min-1140)/60 : 0;
   if (nightness > 0.05) {
-    ctx.fillStyle = `rgba(200,210,230,${nightness * 0.35})`;
+    ctx.fillStyle = `rgba(200,210,230,${nightness * 0.24})`;
     // Fixed star positions (deterministic from seed)
     const stars = [[0.15,0.05],[0.28,0.03],[0.42,0.07],[0.55,0.02],[0.68,0.05],[0.82,0.03],
       [0.10,0.09],[0.35,0.11],[0.50,0.08],[0.72,0.10],[0.88,0.06],[0.20,0.13],[0.60,0.14],
@@ -1328,7 +1340,7 @@ function drawSky(min) {
     const moonRy = 0.08;
     const [mx,my] = px(moonRx, moonRy * 0.5);
     ctx.beginPath();ctx.arc(mx,my,8,0,Math.PI*2);
-    ctx.fillStyle=`rgba(190,200,220,${nightness * 0.55})`;ctx.fill();
+    ctx.fillStyle=`rgba(190,200,220,${nightness * 0.38})`;ctx.fill();
     ctx.beginPath();ctx.arc(mx+3,my-1,7,0,Math.PI*2);
     ctx.fillStyle=sky.top;ctx.fill(); // crescent cutout
   }
@@ -1356,26 +1368,26 @@ function drawSun(min) {
   
   // Soft outer glow — very subtle atmospheric haze
   const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, size * 3.5);
-  glow.addColorStop(0, `rgba(${r},${g},${b},${opacity * 0.18})`);
-  glow.addColorStop(0.5, `rgba(${r},${g},${b},${opacity * 0.06})`);
+  glow.addColorStop(0, `rgba(${r},${g},${b},${opacity * 0.12})`);
+  glow.addColorStop(0.5, `rgba(${r},${g},${b},${opacity * 0.04})`);
   glow.addColorStop(1, `rgba(${r},${g},${b},0)`);
   ctx.beginPath();ctx.arc(sx,sy,size*3.5,0,Math.PI*2);
   ctx.fillStyle=glow;ctx.fill();
   
   // Inner glow — tight and faint
   const inner = ctx.createRadialGradient(sx, sy, 0, sx, sy, size * 1.6);
-  inner.addColorStop(0, `rgba(${r},${g},${b},${opacity * 0.35})`);
+  inner.addColorStop(0, `rgba(${r},${g},${b},${opacity * 0.24})`);
   inner.addColorStop(1, `rgba(${r},${g},${b},0)`);
   ctx.beginPath();ctx.arc(sx,sy,size*1.6,0,Math.PI*2);
   ctx.fillStyle=inner;ctx.fill();
   
   // Sun disc — slightly translucent, hazy
   ctx.beginPath();ctx.arc(sx,sy,size,0,Math.PI*2);
-  ctx.fillStyle=`rgba(${r},${g},${b},${opacity * 0.82})`;ctx.fill();
+  ctx.fillStyle=`rgba(${r},${g},${b},${opacity * 0.58})`;ctx.fill();
   
   // Very subtle highlight — barely visible
   ctx.beginPath();ctx.arc(sx-size*0.28,sy-size*0.28,size*0.35,0,Math.PI*2);
-  ctx.fillStyle=`rgba(255,248,230,${opacity * 0.22})`;ctx.fill();
+  ctx.fillStyle=`rgba(255,248,230,${opacity * 0.15})`;ctx.fill();
   
   // Horizon reflection glow strip (sunrise/sunset)
   const isGolden = (min > 390 && min < 540) || (min > 1080 && min < 1170);
@@ -1383,7 +1395,7 @@ function drawSun(min) {
     const horizY = H * 0.30;
     const hGrad = ctx.createLinearGradient(0, horizY - 4, 0, horizY + 16);
     hGrad.addColorStop(0, `rgba(${r},${g},${b},0)`);
-    hGrad.addColorStop(0.45, `rgba(${r},${g},${b},${opacity * 0.08})`);
+    hGrad.addColorStop(0.45, `rgba(${r},${g},${b},${opacity * 0.05})`);
     hGrad.addColorStop(1, `rgba(${r},${g},${b},0)`);
     ctx.fillStyle = hGrad;
     ctx.fillRect(0, horizY - 4, W, 20);
